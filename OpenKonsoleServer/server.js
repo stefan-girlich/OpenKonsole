@@ -135,15 +135,9 @@ function drawAnalogPos(x, y) {
 
 	var SIZE_X = 20, SIZE_Y = 10;
 
-	var sep = '';
-	for(var i=0; i<SIZE_X; i++) {
-		sep += '-';
-	}
 
-
-
-	var xIx = Math.round((x + 0.5) * SIZE_X),
-		yIx = Math.round((y + 0.5) * SIZE_Y);
+	var xIx = Math.round((x + 0.5) * (SIZE_X - 1)),
+		yIx = Math.round((y + 0.5) * (SIZE_Y - 1));
 
 		console.log(xIx+ ' ' + yIx)
 
@@ -153,11 +147,11 @@ function drawAnalogPos(x, y) {
 
 		for(var j=0; j<SIZE_X; j++) {	// horizontal
 
-			line += (j === xIx && SIZE_Y - i === yIx ? 'X' : '.')
+			line += (j === xIx && (SIZE_Y -1 )- i === yIx ? 'X' : '.')
 		}
 
 		console.log(line)
 	}
 
-	console.log(sep)
+	console.log(' ')
 }
