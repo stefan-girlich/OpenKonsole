@@ -4,6 +4,8 @@ public class CONST {
 
 	public final static String HOST = "192.168.178.30";
 	public final static int PORT = 1337;
+	
+	public final static int ANALOG_RANGE_MAX = 255;	// one byte for each analog value: 2^8 - 1
 
 	public enum Control {
 		BUTTON_START(0),

@@ -4,6 +4,9 @@ var HOST = '192.168.178.30';
 var PORT = 1337;
 
 
+var ANALOG_RANGE_MAX = 255;
+
+
 var util = {
 	toArrayBuffer: function(buffer) {
 	    var ab = new ArrayBuffer(buffer.length);
@@ -95,7 +98,16 @@ var srv = net.createServer(function(socket) {
 			}
 
 		}else {	// action type: analog input
-			console.log('NOT IMPL YET #0')
+
+			/* TODO fix center position bug!!
+			currently, the relative center position will never be 0.0 because:
+			255 (or any other max value) % 127 (or any other "center" value) != 0
+			*/
+
+			var relX = (dataArr[1] / ANALOG_RANGE_MAX) - 0.5,
+				relY = (dataArr[2] / ANALOG_RANGE_MAX) - 0.5;
+
+			drawAnalogPos(relX, relY)
 		}
 		
 	});
@@ -114,3 +126,38 @@ var srv = net.createServer(function(socket) {
 srv.listen(PORT, HOST);
 
 console.log('server is listening on ' + HOST + ':' + PORT);
+
+
+
+// DEBUG SHIZZLE...
+
+function drawAnalogPos(x, y) {
+
+	var SIZE_X = 20, SIZE_Y = 10;
+
+	var sep = '';
+	for(var i=0; i<SIZE_X; i++) {
+		sep += '-';
+	}
+
+
+
+	var xIx = Math.round((x + 0.5) * SIZE_X),
+		yIx = Math.round((y + 0.5) * SIZE_Y);
+
+		console.log(xIx+ ' ' + yIx)
+
+	for(var i=0; i<SIZE_Y; i++) {	// vertical
+
+		var line = '';
+
+		for(var j=0; j<SIZE_X; j++) {	// horizontal
+
+			line += (j === xIx && SIZE_Y - i === yIx ? 'X' : '.')
+		}
+
+		console.log(line)
+	}
+
+	console.log(sep)
+}

@@ -70,23 +70,6 @@ public class MainActivity extends Activity implements AnalogStick.Callback {
 		}
 	}
 
-	private void sendButtonEvent(final Control element, final int motionEvtAction) {
-		byte[] message = new byte[] { element.getIdentifier(), 0 };
-
-		switch (motionEvtAction) {
-		case MotionEvent.ACTION_DOWN:
-			message[1] = CONST.ButtonAction.BUTTON_DOWN.getIdentifier();
-			break;
-		case MotionEvent.ACTION_UP:
-			message[1] = CONST.ButtonAction.BUTTON_UP.getIdentifier();
-			break;
-		default:
-			return;
-		}
-
-		client.sendRequest(Util.buildByteArray(message));
-	}
-
 	@Touch(R.id.btn_action_a)
 	protected boolean onButtonATouch(View v, MotionEvent event) {
 		sendButtonEvent(CONST.Control.BUTTON_A, event.getAction());
@@ -102,6 +85,7 @@ public class MainActivity extends Activity implements AnalogStick.Callback {
 	@Override
 	public void onStickPositionChanged(final float posX, final float posY) {
 		System.out.println("analog stick position changed: " + posX + " " + posY);
+		sendAnalogInputEvent(posX, posY);
 	}
 
 	@Override
@@ -120,5 +104,31 @@ public class MainActivity extends Activity implements AnalogStick.Callback {
 			throw new IllegalArgumentException("No setting found for playerID "
 					+ playerID);
 		}
+	}
+
+	private void sendButtonEvent(final Control element, final int motionEvtAction) {
+		byte[] message = new byte[] { element.getIdentifier(), 0 };
+	
+		switch (motionEvtAction) {
+		case MotionEvent.ACTION_DOWN:
+			message[1] = CONST.ButtonAction.BUTTON_DOWN.getIdentifier();
+			break;
+		case MotionEvent.ACTION_UP:
+			message[1] = CONST.ButtonAction.BUTTON_UP.getIdentifier();
+			break;
+		default:
+			return;
+		}
+	
+		client.sendRequest(Util.buildByteArray(message));
+	}
+	
+	private void sendAnalogInputEvent(final float posX, final float posY) {
+		byte[] msg = new byte[] {CONST.Control.ANALOG_INPUT.getIdentifier(), 
+				Util.convertAnalogValueToByte(posX),
+				Util.convertAnalogValueToByte(posY)
+				};
+		
+		client.sendRequest(Util.buildByteArray(msg));
 	}
 }
