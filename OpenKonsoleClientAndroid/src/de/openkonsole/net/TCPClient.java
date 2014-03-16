@@ -51,10 +51,11 @@ public class TCPClient {
 		return false;
 	}
 
-	public void sendRequest(String message) {
+	public void sendRequest(byte[] buffer) {
+		System.out.println("Trying to send data: " + buffer);
 		if (outputStream != null && clientSocket.isConnected()) {
 			try {
-				outputStream.writeBytes(message);
+				outputStream.write(buffer);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
