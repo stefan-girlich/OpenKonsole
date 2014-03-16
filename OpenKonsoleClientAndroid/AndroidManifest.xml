@@ -2,6 +2,8 @@
     package="de.openkonsole"
     android:versionCode="1"
     android:versionName="1.0" >
+    
+    <uses-permission android:name="android.permission.INTERNET"/>
 
     <uses-sdk
         android:minSdkVersion="8"
@@ -15,7 +17,7 @@
         
         
         <activity 
-            android:name="de.openkonsole.MainActivity_"
+            android:name="de.openkonsole.ui.MainActivity_"
             >
             
              <intent-filter >
