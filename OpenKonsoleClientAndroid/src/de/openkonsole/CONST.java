@@ -5,7 +5,11 @@ public class CONST {
 	public final static String HOST = "192.168.178.30";
 	public final static int PORT = 1337;
 	
-	public final static int ANALOG_RANGE_MAX = 255;	// one byte for each analog value: 2^8 - 1
+	/** The maximum value for analog input information (inclusive);
+	 * 	one byte for each analog value: 2^8 - 1 - 1 (because we want 
+	 * to have an uneven count (including 0) in order to store 
+	 * center positions with equal partial ranges to the left/right. */
+	public final static int ANALOG_RANGE_MAX = 254;
 
 	public enum Control {
 		BUTTON_START(0),
