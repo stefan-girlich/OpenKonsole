@@ -17,8 +17,10 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.RelativeLayout;
 import de.openkonsole.CONST;
+import de.openkonsole.CONST.ButtonAction;
 import de.openkonsole.R;
 import de.openkonsole.Util;
+import de.openkonsole.CONST.Control;
 import de.openkonsole.net.TCPClient;
 import de.openkonsole.net.TCPClient.Callback;
 
@@ -68,17 +70,15 @@ public class MainActivity extends Activity implements AnalogStick.Callback {
 		}
 	}
 
-	private void sendButtonEvent(byte buttonIdentifikator, int action) {
-		byte[] message = new byte[] { buttonIdentifikator, 0 };
+	private void sendButtonEvent(final Control element, final int motionEvtAction) {
+		byte[] message = new byte[] { element.getIdentifier(), 0 };
 
-		switch (action) {
+		switch (motionEvtAction) {
 		case MotionEvent.ACTION_DOWN:
-			message[1] = CONST.BUTTON_DOWN;
-			System.out.println("Button " + buttonIdentifikator + " pressed");
+			message[1] = CONST.ButtonAction.BUTTON_DOWN.getIdentifier();
 			break;
 		case MotionEvent.ACTION_UP:
-			message[1] = CONST.BUTTON_UP;
-			System.out.println("Button " + buttonIdentifikator + " released");
+			message[1] = CONST.ButtonAction.BUTTON_UP.getIdentifier();
 			break;
 		default:
 			return;
@@ -89,13 +89,13 @@ public class MainActivity extends Activity implements AnalogStick.Callback {
 
 	@Touch(R.id.btn_action_a)
 	protected boolean onButtonATouch(View v, MotionEvent event) {
-		sendButtonEvent(CONST.BUTTON_A, event.getAction());
+		sendButtonEvent(CONST.Control.BUTTON_A, event.getAction());
 		return true;
 	}
 
 	@Touch(R.id.btn_action_b)
 	protected boolean onButtonBTouch(View v, MotionEvent event) {
-		sendButtonEvent(CONST.BUTTON_B, event.getAction());
+		sendButtonEvent(CONST.Control.BUTTON_B, event.getAction());
 		return true;
 	}
 
