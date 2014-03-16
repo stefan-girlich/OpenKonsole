@@ -7,7 +7,7 @@ var PORT = 1337;
 var UPD_PORT = 30300;
 
 
-var ANALOG_RANGE_MAX = 255;
+var ANALOG_RANGE_MAX = 254; // 2^8 - 1 - 1 (for enable integer center positions)
 
 
 var util = {
@@ -102,14 +102,10 @@ var srv = net.createServer(function(socket) {
 
 		}else {	// action type: analog input
 
-			/* TODO fix center position bug!!
-			currently, the relative center position will never be 0.0 because:
-			255 (or any other max value) % 127 (or any other "center" value) != 0
-			*/
-
 			var relX = (dataArr[1] / ANALOG_RANGE_MAX) - 0.5,
 				relY = (dataArr[2] / ANALOG_RANGE_MAX) - 0.5;
 
+			// debug: display position
 			drawAnalogPos(relX, relY)
 		}
 		
@@ -136,7 +132,7 @@ console.log('server is listening on ' + HOST + ':' + PORT);
 
 function drawAnalogPos(x, y) {
 
-	var SIZE_X = 20, SIZE_Y = 10;
+	var SIZE_X = 10, SIZE_Y = 6;
 
 
 	var xIx = Math.round((x + 0.5) * (SIZE_X - 1)),
