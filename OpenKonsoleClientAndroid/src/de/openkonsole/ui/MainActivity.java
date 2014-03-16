@@ -3,6 +3,7 @@ package de.openkonsole.ui;
 import java.io.IOException;
 import java.net.UnknownHostException;
 
+import org.androidannotations.annotations.AfterViews;
 import org.androidannotations.annotations.Background;
 import org.androidannotations.annotations.Click;
 import org.androidannotations.annotations.EActivity;
@@ -18,17 +19,18 @@ import de.openkonsole.net.TCPClient;
 import de.openkonsole.net.TCPClient.Callback;
 
 @EActivity(R.layout.activity_main)
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements AnalogStick.Callback {
 
 	TCPClient client;
 
-	@ViewById
-	RelativeLayout layoutMain;
+	@ViewById RelativeLayout layoutMain;
+	@ViewById AnalogStick vAnalogStick;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		connectToServer();
 		super.onCreate(savedInstanceState);
+		
+		connectToServer();
 	}
 
 	@Override
@@ -37,6 +39,11 @@ public class MainActivity extends Activity {
 			client.close();
 		}
 		super.onDestroy();
+	}
+	
+	@AfterViews
+	protected void afterViews() {
+		vAnalogStick.setCallback(this);
 	}
 
 	@Background
@@ -67,6 +74,11 @@ public class MainActivity extends Activity {
 	protected void onButtonBClick() {
 		client.sendRequest("B pressed");
 		System.out.println("===> button B clicked!!!");
+	}
+
+	@Override
+	public void onStickPositionChanged(final float posX, final float posY) {
+		System.out.println("analog stick position changed: " + posX + " " + posY);
 	}
 
 	@Override

@@ -5,6 +5,14 @@
     android:id="@+id/layout_main"
     >
     
+    <de.openkonsole.ui.AnalogStick_
+        android:id="@+id/v_analog_stick"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        />
+    
     
     <Button 
         android:id="@+id/btn_action_a"
