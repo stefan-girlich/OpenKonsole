@@ -1,7 +1,10 @@
 var net = require('net');
+var dgram = require('dgram');
+
 
 var HOST = '192.168.178.30';
 var PORT = 1337;
+var UPD_PORT = 30300;
 
 
 var ANALOG_RANGE_MAX = 255;
@@ -155,3 +158,23 @@ function drawAnalogPos(x, y) {
 
 	console.log(' ')
 }
+
+var message = new Buffer("OPENKONSOLE:" + HOST+":"+PORT);
+
+var udpClient = dgram.createSocket("udp4");
+
+var adress = HOST.substr(0, HOST.length - HOST.split('.')[3].length ) + "255";
+
+setInterval(function () {
+    udpClient.send(message, 0, message.length, UPD_PORT, adress, function (err, bytes) {
+        if (err != null) {
+            console.log(err);
+            console.log(err.stack);
+        };
+    });
+}, 5000);
+udpClient.on('error', function (err) {
+    if (err != null) {
+        console.log(err.stack);
+    };
+});
