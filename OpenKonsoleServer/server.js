@@ -15,42 +15,74 @@ var util = {
 	}
 };
 
+var PlayerRegistry = function() {
 
-var playerOne = null, playerTwo = null;
+	var self = this;
+
+	var players = {
+		0: null,
+		1: null,
+		2: null,
+		3: null
+	};
+
+	this.register = function(playerSocket) {
+
+		var keys = Object.keys(players);
+
+		for(var i=0; i<keys.length; i++) {
+
+			if(players[keys[i]] == null) {
+
+				players[keys[i]] = playerSocket;
+				return keys[i];
+			}
+		}
+
+		return -1;
+	}
+
+	this.unregister = function(playerSocket) {
+
+		var playerID = self.getID(playerSocket);
+		if(playerID < 0) return false;
+
+		players[playerID] = null;
+		return true;
+	}
+
+	this.getID = function(playerSocket) {
+		var keys = Object.keys(players);
+
+		for(var i=0; i<keys.length; i++) {
+			if(players[keys[i]] == playerSocket) {
+				return keys[i];
+			}
+		}
+
+		return -1;
+	}
+}
+
+var playerRegistry = new PlayerRegistry();
 
 
 var srv = net.createServer(function(socket) {
 
 	console.log('client connected to server: ' + socket.remoteAddress + ':' + socket.remotePort);
 
-	var playerID;
-	if(playerOne == null) {
-		playerOne = socket;
-		playerID = 0;
-	}else if(playerTwo == null) {
-		playerTwo = socket;
-		playerID = 1;
-	}else {
-		console.log('no empty player slots available!!!');
-		playerID = -1;
-	}
-
+	var playerID = playerRegistry.register(socket);
 
 	console.log('player connected with playerID: ' + playerID)
 	socket.write(new Buffer(playerID + '\n'));
+
+	// TODO handle connect/login error
 
 
 	socket.on('data', function(data) {
 		//console.log('client sent message: ' + socket.remoteAddress + ':' + socket.remotePort);
 
-
-		if(socket == playerOne) {
-			console.log('=========== playerOne ===========');
-		}else if(socket == playerTwo) {
-			console.log('=========== playerTwo ===========');
-		}else {
-			console.log('data sent by unregistered player!!!!! : ' + data.toString());
-		}
+		console.log('======= PLAYER ' + playerID + '=======')
 
 		var dataArr = new Uint8Array(util.toArrayBuffer(data));
 
@@ -71,14 +103,10 @@ var srv = net.createServer(function(socket) {
 	socket.on('close', function(data) {
 		//console.log('client disconnected: ' + socket.remoteAddress + ':' + socket.remotePort);
 			
-		if(playerOne == socket) {
-			playerOne = null;
-			console.log('playerOne disconnected');
-		}else if(playerTwo == socket) {
-			playerTwo = null;
-			console.log('playerTwo disconnected');
+		if(!playerRegistry.unregister(socket)) {
+			console.log('connection closed for socket, but was not registered as player!')
 		}else {
-			console.log('no player found to remove!!!');
+			console.log('player with ID ' + playerID + ' disconnected');
 		}
 	});
 });
