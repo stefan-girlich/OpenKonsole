@@ -4,16 +4,20 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 
 import org.androidannotations.annotations.Background;
-import org.androidannotations.annotations.Click;
 import org.androidannotations.annotations.EActivity;
+import org.androidannotations.annotations.Touch;
 import org.androidannotations.annotations.UiThread;
 import org.androidannotations.annotations.ViewById;
 
 import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.RelativeLayout;
+import de.openkonsole.CONST;
 import de.openkonsole.R;
+import de.openkonsole.Util;
 import de.openkonsole.net.TCPClient;
 import de.openkonsole.net.TCPClient.Callback;
 
@@ -57,16 +61,35 @@ public class MainActivity extends Activity {
 		}
 	}
 
-	@Click(R.id.btn_action_a)
-	protected void onButtonAClick() {
-		client.sendRequest("A pressed");
-		System.out.println("===> button A clicked!!!");
+	private void sendButtonEvent(byte buttonIdentifikator, int action) {
+		byte[] message = new byte[] { buttonIdentifikator, 0 };
+
+		switch (action) {
+		case MotionEvent.ACTION_DOWN:
+			message[1] = CONST.BUTTON_DOWN;
+			System.out.println("Button " + buttonIdentifikator + " pressed");
+			break;
+		case MotionEvent.ACTION_UP:
+			message[1] = CONST.BUTTON_UP;
+			System.out.println("Button " + buttonIdentifikator + " released");
+			break;
+		default:
+			return;
+		}
+
+		client.sendRequest(Util.buildByteArray(message));
 	}
 
-	@Click(R.id.btn_action_b)
-	protected void onButtonBClick() {
-		client.sendRequest("B pressed");
-		System.out.println("===> button B clicked!!!");
+	@Touch(R.id.btn_action_a)
+	protected boolean onButtonATouch(View v, MotionEvent event) {
+		sendButtonEvent(CONST.BUTTON_A, event.getAction());
+		return true;
+	}
+
+	@Touch(R.id.btn_action_b)
+	protected boolean onButtonBTouch(View v, MotionEvent event) {
+		sendButtonEvent(CONST.BUTTON_B, event.getAction());
+		return true;
 	}
 
 	@Override
