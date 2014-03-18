@@ -7,7 +7,7 @@ var PORT = 1337;
 var UPD_PORT = 30300;
 
 
-var ANALOG_RANGE_MAX = 254; // 2^8 - 1 - 1 (for enable integer center positions)
+var ANALOG_RANGE_MAX = 254; // 2^8 - 1 - 1 (to enable integer center positions)
 
 
 var util = {
@@ -155,22 +155,43 @@ function drawAnalogPos(x, y) {
 	console.log(' ')
 }
 
-var message = new Buffer("OPENKONSOLE:" + HOST+":"+PORT);
 
-var udpClient = dgram.createSocket("udp4");
 
-var adress = HOST.substr(0, HOST.length - HOST.split('.')[3].length ) + "255";
+// ====== broadcasting server for letting clients detect the console server ======
 
-setInterval(function () {
-    udpClient.send(message, 0, message.length, UPD_PORT, adress, function (err, bytes) {
-        if (err != null) {
-            console.log(err);
-            console.log(err.stack);
-        };
-    });
-}, 5000);
-udpClient.on('error', function (err) {
-    if (err != null) {
-        console.log(err.stack);
-    };
-});
+function BroadcastServer(hostAddr, port, intervalMs) {
+
+	var broadcastAddress = hostAddr.split('.');
+	broadcastAddress.pop()
+	broadcastAddress.push('255');
+	broadcastAddress = broadcastAddress.join('.');
+
+	var msg = 'OPENKONSOLE:' + hostAddr + ':' + port,
+		msgBuf = new Buffer(msg);
+
+	var timer,
+		udpClient = dgram.createSocket("udp4");
+
+	this.start = function() {
+		this.stop();
+		timer = setInterval(function() {
+			console.log('BroadcastServer: sending broadcast message to ' + broadcastAddress + ', message: ' + msg);
+			udpClient.send(msgBuf, 0, msgBuf.length, UPD_PORT, broadcastAddress, onError);
+		}, intervalMs);
+	}
+
+	this.stop = function() {
+		if(timer) clearInterval(timer);
+	}
+
+	function onError(err, bytes) {
+		if(err) {
+			console.log('An error occurred while trying to broadcast. Error and stack trace:');
+			console.log(err)
+			console.log(err.stack)
+		}
+	}
+}
+
+var broadcastSrv = new BroadcastServer(HOST, PORT, 1000);
+broadcastSrv.start();
