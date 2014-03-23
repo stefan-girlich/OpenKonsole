@@ -7,7 +7,7 @@ public class CONST {
 	@Deprecated
 	public final static int PORT = 1337;
 	
-	// Konstanten für UDP Broadcast
+	// constants used to detect data from UDP broadcast
 	public final static String BROADCAST_IDENT = "OPENKONSOLE";
 	public final static String BROADCAST_SEPERATOR = ":";
 
