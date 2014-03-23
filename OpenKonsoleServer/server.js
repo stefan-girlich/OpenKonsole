@@ -85,7 +85,11 @@ var srv = net.createServer(function(socket) {
 	// TODO handle connect/login error
 
 
-	socket.on('data', function(data) {
+	socket.on('data', onDataReceived);
+
+	socket.on('close', onClose);
+
+	function onDataReceived(data) {
 		//console.log('client sent message: ' + socket.remoteAddress + ':' + socket.remotePort);
 
 		console.log('======= PLAYER ' + playerID + '=======')
@@ -108,10 +112,9 @@ var srv = net.createServer(function(socket) {
 			// debug: display position
 			drawAnalogPos(relX, relY)
 		}
-		
-	});
+	}
 
-	socket.on('close', function(data) {
+	function onClose(data) {
 		//console.log('client disconnected: ' + socket.remoteAddress + ':' + socket.remotePort);
 			
 		if(!playerRegistry.unregister(socket)) {
@@ -119,7 +122,7 @@ var srv = net.createServer(function(socket) {
 		}else {
 			console.log('player with ID ' + playerID + ' disconnected');
 		}
-	});
+	}
 });
 
 srv.listen(PORT, HOST);
@@ -163,7 +166,11 @@ function BroadcastServer(hostAddr, port, intervalMs) {
 
 	var broadcastAddress = hostAddr.split('.');
 	broadcastAddress.pop()
-	broadcastAddress.push('255');
+
+	//broadcastAddress.push('255');	
+	broadcastAddress.push('42');	// ATTENTION: debug ovveride since broadcast is not working for Steve
+
+
 	broadcastAddress = broadcastAddress.join('.');
 
 	var msg = 'OPENKONSOLE:' + hostAddr + ':' + port,
@@ -171,6 +178,9 @@ function BroadcastServer(hostAddr, port, intervalMs) {
 
 	var timer,
 		udpClient = dgram.createSocket("udp4");
+		udpClient.on('error' ,function(err) {
+			console.log('dammit!!!')
+		})
 
 	this.start = function() {
 		this.stop();
