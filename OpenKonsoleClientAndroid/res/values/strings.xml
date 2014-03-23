@@ -1,5 +1,8 @@
 <resources>
 
     <string name="app_name">openKonsole</string>
+    
+    <string name="msg_please_wait_searching_console">please wait, the console is being searched...</string>
+    <string name="msg_console_found">console found - click button to connect! console address: </string>
 
 </resources>
