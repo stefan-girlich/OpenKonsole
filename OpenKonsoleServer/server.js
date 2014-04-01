@@ -18,22 +18,38 @@ var util = {
 
 var Player = function() {
 
+	var self = this;
+
 	var socket;
 
 	var stickPos = {x: 0, y: 0};
 	var btnStates = [false, false]; // TODO cooler way to store?
 
+
+	// TODO store as constants!
+
+	var callbacks = {
+		'connected': null,
+		'disconnected': null,
+		'stickPositionChanged': null,	
+		'buttonChanged': null
+	};
+
 	this.connect = function(playerSocket) {
 
 		socket = playerSocket;
 
-		stickPos = {x: 0, y: 0};
+		stickPos.x = stickPos.y = 0;
 		btnStates = [false, false];
+
+		dispatchEvent('connected');
 	}
 
 	this.disconnect = function() {
 		socket = null;
 		// TODO reset input? to private method?
+
+		dispatchEvent('disconnected');
 	}
 
 	this.isConnected = function() {
@@ -44,20 +60,33 @@ var Player = function() {
 	this.setStickPos = function(x, y) {
 		stickPos.x = x;
 		stickPos.y = y;
-
-		console.log('stick: ' + x + ' x ' + y);
+		dispatchEvent('stickPositionChanged', stickPos);
 	}
 
+	// TODO DOC reference is stable during player session - should it also stay constant forever?
 	this.getStickPos = function() { return stickPos; };
 
 	this.setButtonState = function(btnIx, isDown)  {
 		btnStates[btnIx] = isDown;
-		console.log('button: ' + btnIx + ' -> ' + isDown);
+		dispatchButtonEvent('buttonChanged', btnIx, isDown);
 	}
 
 	this.getButtonState = function(btnIx) { return btnStates[btnIx]; }
 
 	this.getSocket = function() { return socket; }
+
+
+	this.on = function(eventType, callback) {
+		callbacks[eventType] = callback;
+	}
+
+	function dispatchButtonEvent(type, btnIx, downState) {
+		if(callbacks[type])		callbacks[type](self, btnIx, downState);
+	}
+
+	function dispatchEvent(type, data) {
+		if(callbacks[type])		callbacks[type](self, data);
+	}
 };
 
 var PlayerRegistry = function() {
@@ -71,6 +100,21 @@ var PlayerRegistry = function() {
 		3: new Player()
 	};
 
+	// TODO better rely on a well-known type
+	// TODO naming "getPlayerID" ?
+	// TODO re-think API
+	players.indexOf = function(element) {
+		var keys = Object.keys(players);
+
+		for(var i=0; i<keys.length; i++) {
+			if(players[keys[i]] === element) {
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
 	this.register = function(playerSocket) {
 
 		var keys = Object.keys(players);
@@ -78,7 +122,6 @@ var PlayerRegistry = function() {
 		for(var i=0; i<keys.length; i++) {
 
 			if(!players[keys[i]].isConnected()) {
-				console.log('not connected for id ' + keys[i])
 				players[keys[i]].connect(playerSocket);
 				return players[keys[i]];
 			}
@@ -107,6 +150,10 @@ var PlayerRegistry = function() {
 
 		return -1;
 	}
+
+	this.getPlayers = function() {
+		return players;
+	}
 }
 
 function PlayerServer() {
@@ -114,12 +161,11 @@ function PlayerServer() {
 	var playerRegistry = new PlayerRegistry();
 	var srv = net.createServer(function(socket) {
 
-		console.log('client connected to server: ' + socket.remoteAddress + ':' + socket.remotePort);
+		//console.log('client connected to server: ' + socket.remoteAddress + ':' + socket.remotePort);
 
 		var player = playerRegistry.register(socket),
 			playerID = playerRegistry.getPlayerID(socket);
 
-		console.log('player connected with playerID: ' + playerID)
 		socket.write(new Buffer(playerID + '\n'));
 
 		// TODO handle connect/login error
@@ -145,8 +191,6 @@ function PlayerServer() {
 				
 			if(!playerRegistry.unregister(socket)) {
 				console.log('connection closed for socket, but was not registered as player!')
-			}else {
-				console.log('player with ID ' + playerID + ' disconnected');
 			}
 		}
 	});
@@ -161,6 +205,10 @@ function PlayerServer() {
 
 	this.stop = function() {
 		console.log('TODO IMPL stop function')
+	}
+
+	this.getPlayers = function() {
+		return playerRegistry.getPlayers();
 	}
 }
 
@@ -190,7 +238,7 @@ function BroadcastServer(hostAddr, port, intervalMs, consoleTcpPort) {
 	this.start = function() {
 		this.stop();
 		timer = setInterval(function() {
-			console.log('BroadcastServer: sending broadcast message to ' + broadcastAddress + ', message: ' + msg);
+			//console.log('BroadcastServer: sending broadcast message to ' + broadcastAddress + ', message: ' + msg);
 			udpClient.send(msgBuf, 0, msgBuf.length, port, broadcastAddress, onError);
 		}, intervalMs);
 	}

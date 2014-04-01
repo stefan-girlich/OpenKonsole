@@ -13,6 +13,25 @@ var playerSrv = new srv.PlayerServer();
 playerSrv.listen(TCP_PORT, HOST);
 
 
+var players = playerSrv.getPlayers();
+
+/* // ASYNC TEST
+*/
+players[0].on('connected', onPlayerConnected);
+players[0].on('disconnected', onPlayerDisconnected);
+players[0].on('stickPositionChanged', onStickPositionChanged);
+players[0].on('buttonChanged', onButtonChanged);
+
+
+var dbgStickPos = players[0].getStickPos();
+
+/* SYNC TEST
+setInterval(function() {
+	console.log(dbgStickPos.x + ' x ' + dbgStickPos.y)
+}, 20);
+*/
+
+
 // TODO what other signals to catch?
 process.on('SIGINT', function() {
 	console.log( "\nGracefully shutting down from SIGINT (Ctrl-C)" );
@@ -24,7 +43,28 @@ process.on('SIGINT', function() {
 });
 
 
-// DEBUG SHIZZLE...
+// ================ DEBUG OUTPUT ================
+
+
+function onPlayerConnected(player) {
+	console.log('main.js: player connected with ID ' + players.indexOf(player));
+}
+
+function onPlayerDisconnected(player) {
+	console.log('main.js: player disconnected with ID ' + players.indexOf(player));
+}
+
+
+function onStickPositionChanged(player, stickPos) {
+	console.log('main.js: player ' + players.indexOf(player) + ' stick pos change: ' + stickPos.x + ' x ' + stickPos.y);
+	drawAnalogPos(stickPos.x, stickPos.y);
+}
+
+function onButtonChanged(player, buttonIx, buttonDownState) {
+	console.log('main.js: player ' + players.indexOf(player) + ' button change: ' + buttonIx + ' ' + (buttonDownState ? 'DOWN' : 'UP'));	
+}
+
+
 
 function drawAnalogPos(x, y) {
 
