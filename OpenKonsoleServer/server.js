@@ -16,15 +16,59 @@ var util = {
 	}
 };
 
+var Player = function() {
+
+	var socket;
+
+	var stickPos = {x: 0, y: 0};
+	var btnStates = [false, false]; // TODO cooler way to store?
+
+	this.connect = function(playerSocket) {
+
+		socket = playerSocket;
+
+		stickPos = {x: 0, y: 0};
+		btnStates = [false, false];
+	}
+
+	this.disconnect = function() {
+		socket = null;
+		// TODO reset input? to private method?
+	}
+
+	this.isConnected = function() {
+		return socket != null;
+	}
+
+
+	this.setStickPos = function(x, y) {
+		stickPos.x = x;
+		stickPos.y = y;
+
+		console.log('stick: ' + x + ' x ' + y);
+	}
+
+	this.getStickPos = function() { return stickPos; };
+
+	this.setButtonState = function(btnIx, isDown)  {
+		btnStates[btnIx] = isDown;
+		console.log('button: ' + btnIx + ' -> ' + isDown);
+	}
+
+	this.getButtonState = function(btnIx) { return btnStates[btnIx]; }
+
+	this.getSocket = function() { return socket; }
+};
+
 var PlayerRegistry = function() {
 
 	var self = this;
 
 	var players = {
-		0: null,
-		1: null,
-		2: null,
-		3: null
+		0: new Player(),
+		1: new Player(),
+		2: new Player(),
+		3: new Player()
 	};
 
 	this.register = function(playerSocket) {
@@ -33,30 +77,30 @@ var PlayerRegistry = function() {
 
 		for(var i=0; i<keys.length; i++) {
 
-			if(players[keys[i]] == null) {
-
-				players[keys[i]] = playerSocket;
-				return keys[i];
+			if(!players[keys[i]].isConnected()) {
+				console.log('not connected for id ' + keys[i])
+				players[keys[i]].connect(playerSocket);
+				return players[keys[i]];
 			}
 		}
 
-		return -1;
+		return null;
 	}
 
 	this.unregister = function(playerSocket) {
 
-		var playerID = self.getID(playerSocket);
+		var playerID = self.getPlayerID(playerSocket);
 		if(playerID < 0) return false;
 
-		players[playerID] = null;
+		players[playerID].disconnect();
 		return true;
 	}
 
-	this.getID = function(playerSocket) {
+	this.getPlayerID = function(playerSocket) {
 		var keys = Object.keys(players);
 
 		for(var i=0; i<keys.length; i++) {
-			if(players[keys[i]] == playerSocket) {
+			if(players[keys[i]].getSocket() == playerSocket) {
 				return keys[i];
 			}
 		}
@@ -72,7 +116,8 @@ function PlayerServer() {
 
 		console.log('client connected to server: ' + socket.remoteAddress + ':' + socket.remotePort);
 
-		var playerID = playerRegistry.register(socket);
+		var player = playerRegistry.register(socket),
+			playerID = playerRegistry.getPlayerID(socket);
 
 		console.log('player connected with playerID: ' + playerID)
 		socket.write(new Buffer(playerID + '\n'));
@@ -81,29 +126,17 @@ function PlayerServer() {
 
 
 		socket.on('data', onDataReceived);
-
 		socket.on('close', onClose);
 
 		function onDataReceived(data) {
 			//console.log('client sent message: ' + socket.remoteAddress + ':' + socket.remotePort);
-
-			console.log('======= PLAYER ' + playerID + '=======')
+			//console.log('======= PLAYER ' + playerID + '=======')
 
 			var dataArr = new Uint8Array(util.toArrayBuffer(data));
-
 			if(dataArr[0] < 5) { // action type: button
-
-				if(dataArr[1] === 0) {
-					console.log('BTN ' + (dataArr[0] - 1) + ' DOWN');
-				}else if(dataArr[1] === 1) {
-					console.log('BTN ' + (dataArr[0] - 1) + ' UP');
-				}
-
+				player.setButtonState((dataArr[0] - 1), dataArr[1] === 0);
 			}else {	// action type: analog input
-
-				var relX = (dataArr[1] / ANALOG_RANGE_MAX) - 0.5,
-					relY = (dataArr[2] / ANALOG_RANGE_MAX) - 0.5;
-
+				player.setStickPos((dataArr[1] / ANALOG_RANGE_MAX) - 0.5, (dataArr[2] / ANALOG_RANGE_MAX) - 0.5);
 			}
 		}
 
@@ -123,8 +156,7 @@ function PlayerServer() {
 	})
 
 	this.listen = function(port, host) {
-		srv.listen(port, host, 511, function() {console.log('listening!!!!!!')});
-		console.log('listen!')
+		srv.listen(port, host);
 	}
 
 	this.stop = function() {
