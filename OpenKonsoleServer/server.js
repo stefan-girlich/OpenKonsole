@@ -2,11 +2,6 @@ var net = require('net');
 var dgram = require('dgram');
 
 
-var HOST = '192.168.178.30';
-var PORT = 1337;
-var UPD_PORT = 30300;
-
-
 var ANALOG_RANGE_MAX = 254; // 2^8 - 1 - 1 (to enable integer center positions)
 
 
@@ -70,110 +65,88 @@ var PlayerRegistry = function() {
 	}
 }
 
-var playerRegistry = new PlayerRegistry();
+function PlayerServer() {
+
+	var playerRegistry = new PlayerRegistry();
+	var srv = net.createServer(function(socket) {
+
+		console.log('client connected to server: ' + socket.remoteAddress + ':' + socket.remotePort);
+
+		var playerID = playerRegistry.register(socket);
+
+		console.log('player connected with playerID: ' + playerID)
+		socket.write(new Buffer(playerID + '\n'));
+
+		// TODO handle connect/login error
 
 
-var srv = net.createServer(function(socket) {
+		socket.on('data', onDataReceived);
 
-	console.log('client connected to server: ' + socket.remoteAddress + ':' + socket.remotePort);
+		socket.on('close', onClose);
 
-	var playerID = playerRegistry.register(socket);
+		function onDataReceived(data) {
+			//console.log('client sent message: ' + socket.remoteAddress + ':' + socket.remotePort);
 
-	console.log('player connected with playerID: ' + playerID)
-	socket.write(new Buffer(playerID + '\n'));
+			console.log('======= PLAYER ' + playerID + '=======')
 
-	// TODO handle connect/login error
+			var dataArr = new Uint8Array(util.toArrayBuffer(data));
 
+			if(dataArr[0] < 5) { // action type: button
 
-	socket.on('data', onDataReceived);
+				if(dataArr[1] === 0) {
+					console.log('BTN ' + (dataArr[0] - 1) + ' DOWN');
+				}else if(dataArr[1] === 1) {
+					console.log('BTN ' + (dataArr[0] - 1) + ' UP');
+				}
 
-	socket.on('close', onClose);
+			}else {	// action type: analog input
 
-	function onDataReceived(data) {
-		//console.log('client sent message: ' + socket.remoteAddress + ':' + socket.remotePort);
+				var relX = (dataArr[1] / ANALOG_RANGE_MAX) - 0.5,
+					relY = (dataArr[2] / ANALOG_RANGE_MAX) - 0.5;
 
-		console.log('======= PLAYER ' + playerID + '=======')
-
-		var dataArr = new Uint8Array(util.toArrayBuffer(data));
-
-		if(dataArr[0] < 5) { // action type: button
-
-			if(dataArr[1] === 0) {
-				console.log('BTN ' + (dataArr[0] - 1) + ' DOWN');
-			}else if(dataArr[1] === 1) {
-				console.log('BTN ' + (dataArr[0] - 1) + ' UP');
 			}
-
-		}else {	// action type: analog input
-
-			var relX = (dataArr[1] / ANALOG_RANGE_MAX) - 0.5,
-				relY = (dataArr[2] / ANALOG_RANGE_MAX) - 0.5;
-
-			// debug: display position
-			drawAnalogPos(relX, relY)
-		}
-	}
-
-	function onClose(data) {
-		//console.log('client disconnected: ' + socket.remoteAddress + ':' + socket.remotePort);
-			
-		if(!playerRegistry.unregister(socket)) {
-			console.log('connection closed for socket, but was not registered as player!')
-		}else {
-			console.log('player with ID ' + playerID + ' disconnected');
-		}
-	}
-});
-
-srv.listen(PORT, HOST);
-
-console.log('server is listening on ' + HOST + ':' + PORT);
-
-
-
-// DEBUG SHIZZLE...
-
-function drawAnalogPos(x, y) {
-
-	var SIZE_X = 10, SIZE_Y = 6;
-
-
-	var xIx = Math.round((x + 0.5) * (SIZE_X - 1)),
-		yIx = Math.round((y + 0.5) * (SIZE_Y - 1));
-
-		console.log(xIx+ ' ' + yIx)
-
-	for(var i=0; i<SIZE_Y; i++) {	// vertical
-
-		var line = '';
-
-		for(var j=0; j<SIZE_X; j++) {	// horizontal
-
-			line += (j === xIx && (SIZE_Y -1 )- i === yIx ? 'X' : '.')
 		}
 
-		console.log(line)
+		function onClose(data) {
+			//console.log('client disconnected: ' + socket.remoteAddress + ':' + socket.remotePort);
+				
+			if(!playerRegistry.unregister(socket)) {
+				console.log('connection closed for socket, but was not registered as player!')
+			}else {
+				console.log('player with ID ' + playerID + ' disconnected');
+			}
+		}
+	});
+
+	srv.on('error', function(e) {
+		console.log('err: ' + e)
+	})
+
+	this.listen = function(port, host) {
+		srv.listen(port, host, 511, function() {console.log('listening!!!!!!')});
+		console.log('listen!')
 	}
 
-	console.log(' ')
+	this.stop = function() {
+		console.log('TODO IMPL stop function')
+	}
 }
-
 
 
 // ====== broadcasting server for letting clients detect the console server ======
 
-function BroadcastServer(hostAddr, port, intervalMs) {
+function BroadcastServer(hostAddr, port, intervalMs, consoleTcpPort) {
 
 	var broadcastAddress = hostAddr.split('.');
-	broadcastAddress.pop()
+	broadcastAddress.pop();
 
 	//broadcastAddress.push('255');	
-	broadcastAddress.push('42');	// ATTENTION: debug ovveride since broadcast is not working for Steve
+	broadcastAddress.push('42');	// ATTENTION: debug override since broadcast is not working for Steve
 
 
 	broadcastAddress = broadcastAddress.join('.');
 
-	var msg = 'OPENKONSOLE:' + hostAddr + ':' + port,
+	var msg = 'OPENKONSOLE:' + hostAddr + ':' + '' + consoleTcpPort,
 		msgBuf = new Buffer(msg);
 
 	var timer,
@@ -186,7 +159,7 @@ function BroadcastServer(hostAddr, port, intervalMs) {
 		this.stop();
 		timer = setInterval(function() {
 			console.log('BroadcastServer: sending broadcast message to ' + broadcastAddress + ', message: ' + msg);
-			udpClient.send(msgBuf, 0, msgBuf.length, UPD_PORT, broadcastAddress, onError);
+			udpClient.send(msgBuf, 0, msgBuf.length, port, broadcastAddress, onError);
 		}, intervalMs);
 	}
 
@@ -203,7 +176,6 @@ function BroadcastServer(hostAddr, port, intervalMs) {
 	}
 }
 
-//var broadcastSrv = new BroadcastServer(HOST, PORT, 1000);
-//broadcastSrv.start();
 
 exports.BroadcastServer = BroadcastServer;
+exports.PlayerServer = PlayerServer;

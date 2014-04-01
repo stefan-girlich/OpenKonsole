@@ -2,15 +2,15 @@ var srv = require('./server.js');
 
 
 var HOST = '192.168.178.30';	// TODO determine this server's IP dynamically
-var PORT = 1337;
-var UPD_PORT = 33333;
+var TCP_PORT = 1337;
+var UDP_PORT = 30300;
 
 // TODO constructor args vs .listen() args
-var broadcastSrv = new srv.BroadcastServer(HOST, PORT, 3000);
+var broadcastSrv = new srv.BroadcastServer(HOST, UDP_PORT, 3000, TCP_PORT);
 broadcastSrv.start();
 
-//var playerSrv = new srv.PlayerServer();
-//playerSrv.listen(HOST, PORT);
+var playerSrv = new srv.PlayerServer();
+playerSrv.listen(TCP_PORT, HOST);
 
 
 // TODO what other signals to catch?
