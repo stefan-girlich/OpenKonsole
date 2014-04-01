@@ -203,5 +203,7 @@ function BroadcastServer(hostAddr, port, intervalMs) {
 	}
 }
 
-var broadcastSrv = new BroadcastServer(HOST, PORT, 1000);
-broadcastSrv.start();
+//var broadcastSrv = new BroadcastServer(HOST, PORT, 1000);
+//broadcastSrv.start();
+
+exports.BroadcastServer = BroadcastServer;
