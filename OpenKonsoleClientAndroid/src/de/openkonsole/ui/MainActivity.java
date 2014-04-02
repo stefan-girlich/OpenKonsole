@@ -16,19 +16,21 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 
 @EActivity(R.layout.activity_main)
 public class MainActivity extends Activity {
 	
+	private static final String FOUND_CONSOLE_PREFIX = "openKonsole @ ";
+	
 	private UDPBroadcastReceiver udpReceiver = new UDPBroadcastReceiver(CONST.UDP_PORT);
 	
 	private Ip consoleAddress; 
 	
-	
 	@ViewById TextView tvMessage;
-	@ViewById Button btnConnect;
+	@ViewById TextView tvFoundConsole;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -40,26 +42,28 @@ public class MainActivity extends Activity {
 	
 	@AfterViews
 	protected void afterViews() {
-		
+		tvFoundConsole.setAlpha(0f);
+		tvFoundConsole.setScaleY(0f);
 	}
 	
 	@Background
 	protected void listenForConsole() {
 		final Ip ip = udpReceiver.listenForHost();
-		updateConsoleAddress(ip);
+		showFoundConsole(ip);
 	}
 	
 	@UiThread
-	protected void updateConsoleAddress(final Ip addr) {
+	protected void showFoundConsole(final Ip addr) {
 		
 		consoleAddress = addr;
 		
 		tvMessage.setText(R.string.msg_console_found);
-		tvMessage.setText(tvMessage.getText() + addr.toString());
-		btnConnect.setVisibility(View.VISIBLE);
+		tvFoundConsole.setText(FOUND_CONSOLE_PREFIX + addr.toString());
+		
+		tvFoundConsole.animate().alpha(1.0f).scaleY(1.0f);
 	}
 	
-	@Click(R.id.btn_connect)
+	@Click(R.id.tv_found_console)
 	protected void onLaunchButtonClick() {
 		launchGamePadActivity();
 	}
@@ -70,4 +74,6 @@ public class MainActivity extends Activity {
 		intent.putExtra(GamePadActivity.INTENT_KEY_HOST_ADDRESS, consoleAddress);
 		startActivity(intent);
 	}
+	
+	
 }
