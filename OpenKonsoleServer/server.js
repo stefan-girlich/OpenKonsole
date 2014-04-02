@@ -36,7 +36,9 @@ var util = {
 	normalSquareMaxVal: Math.sqrt(0.5) / 2
 };
 
-var Player = function() {
+var Player = function(playerID) {
+
+	var id = playerID;
 
 	var self = this;
 
@@ -56,6 +58,8 @@ var Player = function() {
 		'stickPositionChangedRaw': null,
 		'buttonChanged': null
 	};
+
+	this.getID = function() { return id; };
 
 	this.connect = function(playerSocket) {
 
@@ -125,26 +129,12 @@ var PlayerRegistry = function() {
 	var self = this;
 
 	var players = {
-		0: new Player(),
-		1: new Player(),
-		2: new Player(),
-		3: new Player()
+		0: new Player(0),
+		1: new Player(1),
+		2: new Player(2),
+		3: new Player(3)
 	};
 
-	// TODO better rely on a well-known type
-	// TODO naming "getPlayerID" ?
-	// TODO re-think API
-	players.indexOf = function(element) {
-		var keys = Object.keys(players);
-
-		for(var i=0; i<keys.length; i++) {
-			if(players[keys[i]] === element) {
-				return i;
-			}
-		}
-
-		return -1;
-	}
 
 	this.register = function(playerSocket) {
 
