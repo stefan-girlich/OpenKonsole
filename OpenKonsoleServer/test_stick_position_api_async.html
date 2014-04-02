@@ -12,21 +12,84 @@
 
 body {
 	background: #707070;
+	padding: 20px;
+}
+
+*[template] {
+	display: none;
 }
 
 #stage {
+	float: left;
 	background: #eee;
 	padding: 20px;
-	margin: 20px;
+	margin-right: 20px;
+}
+
+.player_info {
+	float: left;
+	position: relative;
+	width: 200px;
+	background: white;
+	margin-right: 20px;
+	margin-bottom: 20px;
+}
+
+.player_info > * {
+	float: left;
+}
+
+.player_info .full {
+	width: 90%;
+	padding: 5%;
+}
+
+.player_info .half {
+	width: 40%;
+	padding: 5%;
+}
+
+.player_info .label {
+	padding-bottom: 0px;
+}
+
+.player_info .player_id {
+	font-weight: bold;
+}
+
+.player_info .player_id.connected {
+	background: #9f9
+}
+
+.player_info .btn {
+	background: #333;
+	color: white;
+}
+
+.player_info .btn.down {
+	background: #ddd;
 }
 
 </style>
 
 <body>
 
+<div template class="player_info">
+		<div class="full player_id">Player ID</div>
+		<div class="full label">stick normalized:</div>
+		<div class="half pos_x">0</div>
+		<div class="half pos_y">0</div>
+		<div class="full label">stick raw:</div>
+		<div class="half pos_x_raw">0</div>
+		<div class="half pos_y_raw">0</div>
+		<div class="half btn btn0">Button #0</div>
+		<div class="half btn btn1">Button #1</div>
+		<div class="half btn btn2">Button #2</div>
+		<div class="half btn btn3">Button #3</div>
+</div>
+
+
 <canvas id="stage" width="512" height="512"></canvas>
-<div id="pos_out">-</div>
-<div id="pos_out_raw">-</div>
 
 
 <script>
@@ -57,23 +120,56 @@ drawScale();
 drawMarker(0, 0, colorRaw);
 
 
-players[0].on('stickPositionChangedRaw', onStickPositionChangedRaw);
-players[0].on('stickPositionChanged', onStickPositionChanged);
+var body = document.querySelector('body');
+
+
+var playerKeys = Object.keys(players);
+var domPlayers = {};
+for(var i=0; i<playerKeys.length; i++) {
+	var domPlayer = new DOMPlayerInfo();
+	domPlayer.setPlayerID(i);
+	domPlayers[i] = domPlayer;
+	body.appendChild(domPlayer.el);
+
+	players[i].on('connected', onConnected);
+	players[i].on('disconnected', onDisconnected);
+	players[i].on('stickPositionChangedRaw', onStickPositionChangedRaw);
+	players[i].on('stickPositionChanged', onStickPositionChanged);
+	players[i].on('buttonChanged', onButtonChanged);
+}
+
+
+
+function onConnected(playerInstance) {
+	domPlayers[playerInstance.getID()].setConnected(true);
+}
+
+function onDisconnected(playerInstance) {
+	domPlayers[playerInstance.getID()].setConnected(false);
+}
+
 
 function onStickPositionChangedRaw(playerInstance, stickPos) {
 
 	markerRawPosAbs.x = canvasCenter + (canvasCenter * stickPos.x * 2);
 	markerRawPosAbs.y = canvasCenter + (canvasCenter * stickPos.y * -2);
-	el_pos_raw.innerHTML = stickPos.x + ' x ' + stickPos.y;
 	drawAll();
+
+
+	domPlayers[playerInstance.getID()].setPosRaw(stickPos.x, stickPos.y);
 }
 
 function onStickPositionChanged(playerInstance, stickPos) {
 
 	markerPosAbs.x = canvasCenter + ((innerSquareSize / 2) * stickPos.x * 2);
 	markerPosAbs.y = canvasCenter + ((innerSquareSize / 2) * stickPos.y * -2);
-	el_pos.innerHTML = stickPos.x + ' x ' + stickPos.y;
 	drawAll();
+
+	domPlayers[playerInstance.getID()].setPos(stickPos.x, stickPos.y);
+}
+
+function onButtonChanged(playerInstance, buttonID, isDown) {
+	domPlayers[playerInstance.getID()].setButtonDown(buttonID, isDown);
 }
 
 
@@ -118,6 +214,60 @@ function drawMarker(absX, absY, color) {
 	ctx.fillStyle = color;
 	ctx.strokeStyle = null;
 	ctx.fillRect(absX - markerSize / 2, absY - markerSize / 2, markerSize, markerSize);
+}
+
+function DOMPlayerInfo() {
+
+	var el = document.querySelector('[template].player_info').cloneNode(true);
+	el.removeAttribute('template');
+
+	this.el = el;
+
+	this.setPlayerID = function(playerId) {
+		el.querySelector('.player_id').innerHTML = playerId;
+	}
+
+	this.setConnected = function(connected) {
+		var el_title = el.querySelector('.player_id');
+		var classes = el_title.className.split(' ');
+		if(connected) {
+			el_title.className += ' connected';
+		}else {
+			var res = [];
+			for(var i=0; i<classes.length; i++) {
+				if(classes[i] !== 'connected') {
+					res.push(classes[i]);
+				}			}
+			el_title.className = res.join(' ');
+		}
+	}
+
+	this.setPos = function(x, y) {
+		el.querySelector('.pos_x').innerHTML = Math.round(x * 10000) / 10000;
+		el.querySelector('.pos_y').innerHTML = Math.round(y * 10000) / 10000;
+	}
+
+	this.setPosRaw = function(x, y) {
+		el.querySelector('.pos_x_raw').innerHTML = Math.round(x * 10000) / 10000;
+		el.querySelector('.pos_y_raw').innerHTML = Math.round(y * 10000) / 10000;
+	}
+
+	this.setButtonDown = function(btnId, down) {
+		var el_btn = el.querySelector('.btn.btn' + btnId);
+		var classes = el_btn.className.split(' ');
+		if(down) {
+			el_btn.className += ' down';
+		}else {
+			var res = [];
+			for(var i=0; i<classes.length; i++) {
+				if(classes[i] !== 'down') {
+					res.push(classes[i]);
+				}
+			}
+			el_btn.className = res.join(' ');
+		}
+	}
+
 }
 
 </script>
