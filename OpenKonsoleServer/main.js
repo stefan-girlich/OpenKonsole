@@ -12,26 +12,8 @@ broadcastSrv.start();
 var playerSrv = new srv.PlayerServer();
 playerSrv.listen(TCP_PORT, HOST);
 
-
+// seems to be visible in node-webkit; better hide and provide API method
 var players = playerSrv.getPlayers();
-
-/* // ASYNC TEST
-
-players[0].on('connected', onPlayerConnected);
-players[0].on('disconnected', onPlayerDisconnected);
-players[0].on('stickPositionChanged', onStickPositionChanged);
-players[0].on('buttonChanged', onButtonChanged);
-*/
-
-
-
-
-/* SYNC TEST
-var dbgStickPos = players[0].getStickPos();
-setInterval(function() {
-	console.log(dbgStickPos.x + ' x ' + dbgStickPos.y)
-}, 20);
-*/
 
 
 // TODO what other signals to catch?
@@ -43,52 +25,3 @@ process.on('SIGINT', function() {
 
 	process.exit();
 });
-
-
-// ================ DEBUG OUTPUT ================
-
-
-function onPlayerConnected(player) {
-	console.log('main.js: player connected with ID ' + players.indexOf(player));
-}
-
-function onPlayerDisconnected(player) {
-	console.log('main.js: player disconnected with ID ' + players.indexOf(player));
-}
-
-
-function onStickPositionChanged(player, stickPos) {
-	console.log('main.js: player ' + players.indexOf(player) + ' stick pos change: ' + stickPos.x + ' x ' + stickPos.y);
-	drawAnalogPos(stickPos.x, stickPos.y);
-}
-
-function onButtonChanged(player, buttonIx, buttonDownState) {
-	console.log('main.js: player ' + players.indexOf(player) + ' button change: ' + buttonIx + ' ' + (buttonDownState ? 'DOWN' : 'UP'));	
-}
-
-
-
-function drawAnalogPos(x, y) {
-
-	var SIZE_X = 10, SIZE_Y = 6;
-
-
-	var xIx = Math.round((x + 0.5) * (SIZE_X - 1)),
-		yIx = Math.round((y + 0.5) * (SIZE_Y - 1));
-
-		console.log(xIx+ ' ' + yIx)
-
-	for(var i=0; i<SIZE_Y; i++) {	// vertical
-
-		var line = '';
-
-		for(var j=0; j<SIZE_X; j++) {	// horizontal
-
-			line += (j === xIx && (SIZE_Y -1 )- i === yIx ? 'X' : '.')
-		}
-
-		console.log(line)
-	}
-
-	console.log(' ')
-}
