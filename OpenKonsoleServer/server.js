@@ -94,7 +94,8 @@ var Player = function() {
 	}
 
 	// TODO DOC reference is stable during player session - should it also stay constant forever?
-	this.getStickPosRaw = function() { return stickPos; };
+	this.getStickPos = function() { return stickPosNorm; };
+	this.getStickPosRaw = function() { return stickPosRaw; };
 
 	this.setButtonState = function(btnIx, isDown)  {
 		btnStates[btnIx] = isDown;
