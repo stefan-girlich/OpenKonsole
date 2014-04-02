@@ -16,16 +16,18 @@ playerSrv.listen(TCP_PORT, HOST);
 var players = playerSrv.getPlayers();
 
 /* // ASYNC TEST
-*/
+
 players[0].on('connected', onPlayerConnected);
 players[0].on('disconnected', onPlayerDisconnected);
 players[0].on('stickPositionChanged', onStickPositionChanged);
 players[0].on('buttonChanged', onButtonChanged);
+*/
 
 
-var dbgStickPos = players[0].getStickPos();
+
 
 /* SYNC TEST
+var dbgStickPos = players[0].getStickPos();
 setInterval(function() {
 	console.log(dbgStickPos.x + ' x ' + dbgStickPos.y)
 }, 20);

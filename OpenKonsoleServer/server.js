@@ -4,6 +4,12 @@ var dgram = require('dgram');
 
 var ANALOG_RANGE_MAX = 254; // 2^8 - 1 - 1 (to enable integer center positions)
 
+// shims
+Math.sign = Math.sign || function(value) {
+	if(value === 0) return 0;
+	return value > 0 ? 1 : -1;
+};
+
 
 var util = {
 	toArrayBuffer: function(buffer) {
@@ -13,7 +19,21 @@ var util = {
 	        arr[i] = buffer[i];
 	    }
 	    return ab;
-	}
+	},
+
+	/** In order to normalize analog input and enable a [-0.5, +0.5] input value 
+	range for each axis, the raw input values in the full circular area are 
+	clipped to be coordinates in the biggest square that fits in the circular area.
+	The value computed here describes the relative edge length for this inner square.
+	It is a resolved Pythagoras equation where:
+	c = 1.0 = circular range diameter = inner rect diagonal length
+	a = b
+
+	/2 is applied since we need the size relative to one half of the full range
+
+	TODO Jakob, a math dude should read through the crap I just wrote...
+	*/
+	normalSquareMaxVal: Math.sqrt(0.5) / 2
 };
 
 var Player = function() {
@@ -22,7 +42,8 @@ var Player = function() {
 
 	var socket;
 
-	var stickPos = {x: 0, y: 0};
+	var stickPosRaw = {x: 0, y: 0};
+	var stickPosNorm = {x: 0, y: 0};
 	var btnStates = [false, false]; // TODO cooler way to store?
 
 
@@ -31,7 +52,8 @@ var Player = function() {
 	var callbacks = {
 		'connected': null,
 		'disconnected': null,
-		'stickPositionChanged': null,	
+		'stickPositionChanged': null,
+		'stickPositionChangedRaw': null,
 		'buttonChanged': null
 	};
 
@@ -39,7 +61,7 @@ var Player = function() {
 
 		socket = playerSocket;
 
-		stickPos.x = stickPos.y = 0;
+		stickPosRaw.x = stickPosRaw.y = stickPosNorm.x = stickPosNorm.y = 0;
 		btnStates = [false, false];
 
 		dispatchEvent('connected');
@@ -56,15 +78,23 @@ var Player = function() {
 		return socket != null;
 	}
 
-
+	/** x and y are RAW input values, depicting the position
+	in the entire available movement area without any deadzones */
 	this.setStickPos = function(x, y) {
-		stickPos.x = x;
-		stickPos.y = y;
-		dispatchEvent('stickPositionChanged', stickPos);
+		stickPosRaw.x = x;
+		stickPosRaw.y = y;
+
+		// TODO wooooaaah... is this the simplest way?
+		stickPosNorm.x = (Math.sign(x) * (Math.min(Math.abs(x), util.normalSquareMaxVal) / util.normalSquareMaxVal)) / 2;
+		stickPosNorm.y = (Math.sign(y) * (Math.min(Math.abs(y), util.normalSquareMaxVal) / util.normalSquareMaxVal)) / 2;
+
+		dispatchEvent('stickPositionChanged', stickPosNorm);
+		dispatchEvent('stickPositionChangedRaw', stickPosRaw);
+
 	}
 
 	// TODO DOC reference is stable during player session - should it also stay constant forever?
-	this.getStickPos = function() { return stickPos; };
+	this.getStickPosRaw = function() { return stickPos; };
 
 	this.setButtonState = function(btnIx, isDown)  {
 		btnStates[btnIx] = isDown;
