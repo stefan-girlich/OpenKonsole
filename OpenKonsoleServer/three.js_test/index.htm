@@ -27,7 +27,7 @@
 	float: left;
 	margin-right: 40px;
 	width: 180px;
-	height: 600px;
+	height: 200px;
 }
 
 .paddle_control .marker {
@@ -146,16 +146,18 @@ var COURT_SIZE = {
 var BALL = {
 	radius: 2,
 	segments: 32,
-	bounceHeight: 5,
+	bounceHeight: 2,
 }
 
 
 var CONSTR = {
-	paddleMaxSpeed: 5,
+	paddleMaxSpeed: 6,
 	paddleSpeedDampingFactor: 0.8,
 	paddleSpeedGainAmount: 2,
 	paddleMaxPos: (COURT_SIZE.z - PADDLE_SIZE.z) / 2,
-	ballSpeed: 3
+	ballMaxPosX: (COURT_SIZE.x - BALL.radius - 2 * PADDLE_SIZE.x) / 2,
+	ballMaxPosZ: (COURT_SIZE.z - BALL.radius) / 2,
+	ballSpeed: 2
 }
 
 
@@ -186,23 +188,25 @@ function PlayerPaddle() {
 
 function Ball(initAngleRad) {
 	var angle = initAngleRad;
-	var posX = 0, posY = 0;
+	var posX = 0, posZ = 0;
 
 	this.move = function(dist) { // TODO param
-		// TODO impl
-		//posX += dist;
-		//posY += dist;
+		posX += dist * Math.cos(angle);
+		posZ += dist * Math.sin(angle);
 	}
 
-	this.getX = function() {
-		return posX;
+	this.getX = function() {	return posX;	}
+	this.getZ = function() {	return posZ;	}
+
+	this.bounceX = function() {
+		angle = Math.PI - angle;
 	}
 
-	this.getY = function() {
-		return posY;
+	this.bounceZ = function() {
+		angle = -angle;
 	}
 
-
+	this.isLost = false;
 }
 
 // run-time game logic params
@@ -211,7 +215,7 @@ var lgPaddles = [
 	new PlayerPaddle()
 ];
 
-var lgBall = new Ball(Math.PI / 2);		// TODO random initial ball angle
+var lgBall = new Ball(Math.PI / 4);		// = 45°; TODO random initial ball angle
 
 var el_stageWrap = document.querySelector('#stage_wrap');
 
@@ -224,6 +228,21 @@ function animate(){
 	var timeDiff = time - lastTime;
 	lastTime = time;
 
+	updatePads(timeDiff);
+	updateBall(time, timeDiff);
+		
+
+
+	renderer.render(scene, camera);	// render
+
+	// request new frame
+	requestAnimationFrame(function(){
+	    animate();
+	});
+}
+
+
+function updatePads(elapsedTime) {
 	// update paddle movements/positions
 	for(var i=0; i<lgPaddles.length; i++) {
 
@@ -246,9 +265,12 @@ function animate(){
 			lgPaddles[i].brakeToStop();
 		}
 	}
+}
 
+
+function updateBall(time, elapsedTime) {
 	// update ball
-	lgBall.move(CONSTR.ballSpeed);
+	lgBall.move(CONSTR.ballSpeed);	// TODO normalize against timeDiff
 
 	// TODO normalize against timeDiff
 	// TODO to constant / formula
@@ -256,20 +278,56 @@ function animate(){
 
 	ball.position.x = lgBall.getX();
 	ball.position.y = bounceY;
-	ball.position.z = lgBall.getY();
+	ball.position.z = lgBall.getZ();
 
-	renderer.render(scene, camera);	// render
+	if(lgBall.isLost) {
 
-	// request new frame
-	requestAnimationFrame(function(){
-	    animate();
-	});
+		return;
+	}
+
+	// TODO does it make sense to calculate the clipped pos more precisely?
+	if(ball.position.z > CONSTR.ballMaxPosZ) {
+		ball.position.z = CONSTR.ballMaxPosZ;
+		lgBall.bounceZ();
+	}else if(ball.position.z < -CONSTR.ballMaxPosZ) {
+		ball.position.z = -CONSTR.ballMaxPosZ;
+		lgBall.bounceZ();
+	}
+
+	if(ball.position.x > CONSTR.ballMaxPosX) {
+
+		if(ball.position.z < paddleTwo.position.z - PADDLE_SIZE.z / 2
+			|| ball.position.z > paddleTwo.position.z + PADDLE_SIZE.z / 2) {
+			// out!
+			console.log('OUUUUUUUUT TO THE RIGHT!!!!!!!')
+			// TODO handle
+			lgBall.isLost = true;
+		}else {
+			ball.position.x = CONSTR.ballMaxPosX;
+			lgBall.bounceX();
+		}
+
+	}else if(ball.position.x < -CONSTR.ballMaxPosX) {
+
+		if(ball.position.z < paddleOne.position.z - PADDLE_SIZE.z / 2
+			|| ball.position.z > paddleOne.position.z + PADDLE_SIZE.z / 2) {
+			// out!
+			console.log('OUUUUUUUUT TO THE LEFT!!!!!!!')
+			// TODO handle
+			lgBall.isLost = true;
+		}else {
+			ball.position.x = -CONSTR.ballMaxPosX;
+			lgBall.bounceX();
+		}
+	}
 }
+
+
 
 // renderer
 var renderer = new THREE.WebGLRenderer();
 renderer.setSize(el_stageWrap.offsetWidth, el_stageWrap.offsetHeight);
-renderer.setClearColorHex(0xbbbbbb, 1);
+renderer.setClearColor(0xbbbbbb, 1);
 
 
 el_stageWrap.appendChild(renderer.domElement);
