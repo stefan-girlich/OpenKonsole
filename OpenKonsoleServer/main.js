@@ -1,7 +1,7 @@
 var srv = require('./server.js');
 
 
-var HOST = '192.168.178.30';	// TODO determine this server's IP dynamically
+var HOST = '192.168.178.56';	// TODO determine this server's IP dynamically
 var TCP_PORT = 1337;
 var UDP_PORT = 30300;
 
