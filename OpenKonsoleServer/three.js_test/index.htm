@@ -18,17 +18,23 @@ body {
 }
 
 #stage_wrap {
+	position: relative;
 	float: left;
 	width: 800px;
 	height: 600px;
 	margin: 30px;
 }
 
+#stage_wrap canvas {
+	position: absolute;
+	z-index: 1;
+}
+
 .paddle_control {
 	position: relative;
 	margin-top: 30px;
 	float: left;
-	margin-right: 40px;
+	margin-right: 10px;
 	width: 180px;
 	height: 200px;
 }
@@ -40,11 +46,48 @@ body {
 	background: white;
 }
 
+.button {
+	position: relative;
+	width: 70px;
+	height: 70px;
+	margin-top: 30px;
+	margin-right: 30px;
+	float: left;
+	background: gray;
+}
+
 #control_one {
 	background: blue;
 }
 #control_two {
 	background: red;
+}
+
+.ui {
+	position: absolute;
+	z-index: 10;
+	width: 100%;
+	height: 100%;
+	display: none;
+}
+
+.ui.home .title_bar {
+	position: absolute;
+	width: 100%;
+	height: 100px;
+	left: 0;
+	bottom: 0;
+	color: black;
+	font-size: 24px;
+	text-align: center;
+}
+
+.ui .text {
+	position: relative;
+	width: 100%;
+	top: 260px;
+	text-align: center;
+	font-size: 48px;
 }
 
 </style>
@@ -53,10 +96,29 @@ body {
 
 <body>
 
-<div id="stage_wrap"></div>
+<div id="stage_wrap">
+	
+	<div class="ui home">
+		<div class="title_bar">press any button to start or pause the game</div>
+	</div>
+
+	<div class="ui countdown">
+		<div class="text"></div>
+	</div>
+
+	<div class="ui paused">
+		<div class="text">paused.</div>
+	</div>
+
+	<div class="ui scored">
+		<div class="text">point scored!</div>
+	</div>
+</div>
 
 <div id="control_one" class="paddle_control"><div class="marker"></div></div>
+<div id="btn_one" class="button">A</div>
 <div id="control_two" class="paddle_control"><div class="marker"></div></div>
+<div id="btn_two" class="button">A</div>
 
 <script>
 
@@ -75,6 +137,7 @@ function PlayerAPIDummy() {
 	};
 
 	var stickPosRaw = {x: 0, y: 0};
+	var btns = [true,true]
 
 	this.on = function(eventType, callback) {
 		callbacks[eventType] = callback;
@@ -86,10 +149,19 @@ function PlayerAPIDummy() {
 		dispatchEvent('stickPositionChangedRaw', stickPosRaw);
 	}
 
+	this.setButtonState = function(btnId, isDown) {
+		btns[btnId] = isDown;
+		dispatchButtonEvent('buttonChanged', btnId, isDown);
+	}
+
 	this.getStickPosRaw = function() { return stickPosRaw; };
 
 	function dispatchEvent(type, data) {
 		if(callbacks[type])		callbacks[type](self, data);
+	}
+
+	function dispatchButtonEvent(type, btnIx, downState) {
+		if(callbacks[type])		callbacks[type](self, btnIx, downState);
 	}
 }
 
@@ -103,16 +175,32 @@ var playerInputs = [
 var el_ctrl_one = document.getElementById('control_one'),
 	el_ctrl_two = document.getElementById('control_two'),
 	el_ctrl_marker_one = el_ctrl_one.querySelector('.marker'),
-	el_ctrl_marker_two = el_ctrl_two.querySelector('.marker');
+	el_ctrl_marker_two = el_ctrl_two.querySelector('.marker'),
+	el_btn_one = document.getElementById('btn_one'),
+	el_btn_two = document.getElementById('btn_two');
 
 	ctrl_height = el_ctrl_one.offsetHeight;
 
 el_ctrl_one.onmousemove = el_ctrl_two.onmousemove = onMouseMove;
 el_ctrl_one.onmouseleave = el_ctrl_two.onmouseleave = onMouseLeave;
 
+el_btn_one.onmousedown = onButtonMouseDown;
+el_btn_one.onmouseup = onButtonMouseUp;
+el_btn_two.onmousedown = onButtonMouseDown;
+el_btn_two.onmouseup = onButtonMouseUp;
+
 updateControl(el_ctrl_marker_one, 0.0);
 updateControl(el_ctrl_marker_two, 0.0);
 
+
+function onButtonMouseDown(evt) {
+	var playerIx = evt.currentTarget === el_btn_one ? 0 : 1;
+	playerInputs[playerIx].setButtonState(0, true)
+}
+function onButtonMouseUp(evt) {
+	var playerIx = evt.currentTarget === el_btn_one ? 0 : 1;
+	playerInputs[playerIx].setButtonState(0, false)
+}
 
 function onMouseMove(evt) {
 	var posIn = (evt.y - 30) / ctrl_height - 0.5;	// dirrrty: -30 is top margin
@@ -130,6 +218,7 @@ function onMouseLeave(evt) {
 function updateControl(markerEl, pos) {
 	markerEl.style.top = (pos + 0.5) * ctrl_height + 'px';
 }
+
 
 
 
@@ -168,6 +257,16 @@ var CAMERA = {
 }
 
 
+var STATE = {
+	home: 0,
+	countdown: 1,
+	playing: 2,
+	paused: 3,
+	masterPaused: 4,
+	pointScored: 5
+};
+
+
 var CONSTR = {
 	paddleMaxSpeed: 24,
 	paddleSpeedDampingFactor: 0.8,
@@ -176,7 +275,9 @@ var CONSTR = {
 	ballMaxPosX: (COURT.size.x - BALL.radius - 2 * PAD.size.x) / 2,
 	ballMaxPosZ: (COURT.size.z - BALL.radius) / 2,
 	ballSpeed: 0.3,	// 1/ms
-	ballLostTimeout: 3000 // ms
+	ballLostTimeout: 3000, // ms
+	countDownTime: 3, // s
+	pointScoredTimeout: 2 // s
 }
 
 
@@ -206,12 +307,19 @@ function PlayerPaddle() {
 
 
 function Ball(initAngleRad) {
+	var self = this;
 	var angle = initAngleRad;
 	var posX = 0, posZ = 0;
 
 	this.move = function(dist) {
 		posX += dist * Math.cos(angle);
 		posZ += dist * Math.sin(angle);
+	}
+
+	this.reset = function() {
+		this.isLost = false;
+		posX = posZ = 0;
+
 	}
 
 	this.getX = function() {	return posX;	}
@@ -228,21 +336,102 @@ function Ball(initAngleRad) {
 	this.isLost = false;
 }
 
+
+var el_stageWrap = document.querySelector('#stage_wrap');
+
+
 // run-time game logic params
 var lgPaddles = [
 	new PlayerPaddle(),
 	new PlayerPaddle()
 ];
-
 var lgBall = new Ball(Math.PI / 4);		// = 45°; TODO random initial ball angle
 
 
-// materials
-var matBall = new THREE.MeshLambertMaterial({color: 'white', transparent: true});
-
-var el_stageWrap = document.querySelector('#stage_wrap');
-
+var gameState;
 var lastTime = 0;
+var countdownRemaining = CONSTR.countDownTime * 1000;
+
+
+// catch user button press releases asynchronously
+playerInputs[0].on('buttonChanged', onUserButtonPress);
+playerInputs[1].on('buttonChanged', onUserButtonPress);
+function onUserButtonPress(player, btnId, down) {
+	if(!down) {
+		switch(gameState) {
+			case STATE.home:
+				switchGameState(STATE.countdown);
+				break;
+
+			case STATE.playing:
+				switchGameState(STATE.paused);
+				break;
+
+			case STATE.paused:
+				switchGameState(STATE.countdown);
+				break;
+		}
+	}
+}
+
+
+// initialize game state
+switchGameState(STATE.home);
+
+
+function switchGameState(state) {
+	switch(state) {
+
+		case STATE.home:
+			var ui_home = el_stageWrap.querySelector('.ui.home');
+			ui_home.style.display = 'block';
+			break;
+
+		case  STATE.playing:
+			hideAllUi();
+			break;
+
+		case STATE.countdown:
+			hideAllUi();
+			var ui_countdown = el_stageWrap.querySelector('.ui.countdown');
+			ui_countdown.style.display = 'block';
+
+			countdownRemaining = CONSTR.countDownTime * 1000
+			break;
+
+		case STATE.paused:
+			hideAllUi();
+			var ui_paused = el_stageWrap.querySelector('.ui.paused');
+			ui_paused.style.display = 'block';
+			break;
+
+		case STATE.pointScored:
+
+			hideAllUi();
+			var ui_scored = el_stageWrap.querySelector('.ui.scored');
+			ui_scored.style.display = 'block';
+			
+			countdownRemaining = CONSTR.pointScoredTimeout * 1000
+			break;
+	}
+
+	gameState = state;
+
+	function hideAllUi() {
+		var all_ui = el_stageWrap.querySelectorAll('.ui');
+		for(var i=0; i<all_ui.length; i++) {
+			all_ui[i].style.display = 'none';
+		}
+	}
+}
+
+
+function setCountDownState(countdown) {
+	var ui_countdown = el_stageWrap.querySelector('.ui.countdown'),
+		ui_countdown_text = ui_countdown.querySelector('.text');
+
+	ui_countdown_text.innerHTML = countdown;
+}
 
 // this function is executed on each animation frame
 function animate(){
@@ -257,16 +446,69 @@ function animate(){
 		timeDiff = 17;
 	}
 
-	updatePads(timeDiff);
-	updateBall(time, timeDiff);
-		
-	camera.lookAt(new THREE.Vector3(
-		ball.position.x * CAMERA.ballTrackFactorX, 
-		ball.position.y * CAMERA.ballTrackFactorY, 
-		ball.position.z * CAMERA.ballTrackFactorZ
-	));
 
-	renderer.render(scene, camera);	// render
+	// TODO move to switchGameState
+	var activeCamera = camera;
+
+	if(gameState === STATE.home) {
+
+		activeCamera = cameraIdle;
+
+		cameraIdle.position.x = Math.sin(time / 5000) * 330;
+		cameraIdle.position.z = Math.cos(time / 5000) * 330;
+		cameraIdle.lookAt(new THREE.Vector3(0, 0, 0));
+
+	}else if(gameState === STATE.countdown) {
+
+		countdownRemaining -= timeDiff;
+
+		if(countdownRemaining > 2000) {
+			setCountDownState(3);
+		}else if(countdownRemaining > 1000) {
+			setCountDownState(2);
+		}else if(countdownRemaining > 0) {
+			setCountDownState(1);
+		}else {
+			switchGameState(STATE.playing);
+		}
+
+	}else if(gameState === STATE.playing) {
+		updatePads(timeDiff);
+		updateBall(time, timeDiff);
+
+		camera.lookAt(new THREE.Vector3(
+			ball.position.x * CAMERA.ballTrackFactorX, 
+			ball.position.y * CAMERA.ballTrackFactorY, 
+			ball.position.z * CAMERA.ballTrackFactorZ
+		));
+
+	}else if(gameState === STATE.paused) {
+		activeCamera = cameraIdle;
+		cameraIdle.position.x = Math.sin(time / 5000) * 330;
+		cameraIdle.position.z = Math.cos(time / 5000) * 330;
+		cameraIdle.lookAt(new THREE.Vector3(ball.position.x, ball.position.y, ball.position.z));
+
+	}else if(gameState === STATE.pointScored) {
+		updatePads(timeDiff);
+		updateBall(time, timeDiff);
+
+		ball.material.opacity -= 0.003 * timeDiff;
+
+		countdownRemaining -= timeDiff;
+
+		if(countdownRemaining < 0) {
+			switchGameState(STATE.countdown);
+			ball.material.opacity = 1.0;
+			lgBall.reset();
+			ball.position.x = lgBall.getX();
+			ball.position.z = lgBall.getZ();
+			camera.lookAt(new THREE.Vector3(ball.position.x, ball.position.y, ball.position.z));
+		}
+	}else {
+		console.log(' TODO unhandled state? ' + gameState)
+	}
+
+	renderer.render(scene, activeCamera);	// render
 
 	// request new frame
 	requestAnimationFrame(function(){
@@ -301,14 +543,11 @@ function updateBall(time, elapsedTime) {
 	var bounceY = Math.abs(Math.sin(time / BALL.bounceRate) * BALL.bounceHeight);
 
 	ball.position.x = lgBall.getX();
-	ball.position.z = lgBall.getZ();
-
-	if(lgBall.isLost) {
-		matBall.opacity -= 0.003 * elapsedTime;
-		return;
-	}
-
 	ball.position.y = bounceY;
+	ball.position.z = lgBall.getZ();
+	
+	if(lgBall.isLost) return;
+
 
 	// TODO does it make sense to calculate the clipped pos more precisely?
 	if(ball.position.z > CONSTR.ballMaxPosZ) {
@@ -324,9 +563,10 @@ function updateBall(time, elapsedTime) {
 		if(ball.position.z < pads[1].position.z - PAD.size.z / 2
 			|| ball.position.z > pads[1].position.z + PAD.size.z / 2) {
 			// out!
-			console.log('OUUUUUUUUT TO THE RIGHT!!!!!!!')
-			// TODO handle
-			lgBall.isLost = true;
+			
+			switchGameState(STATE.pointScored);
+
+			lgBall.isLost = true;	// TODO remove, is handled by STATE
 		}else {
 			ball.position.x = CONSTR.ballMaxPosX;
 			lgBall.bounceX();
@@ -337,8 +577,9 @@ function updateBall(time, elapsedTime) {
 		if(ball.position.z < pads[0].position.z - PAD.size.z / 2
 			|| ball.position.z > pads[0].position.z + PAD.size.z / 2) {
 			// out!
-			console.log('OUUUUUUUUT TO THE LEFT!!!!!!!')
-			// TODO handle
+			
+			switchGameState(STATE.pointScored);
+
 			lgBall.isLost = true;
 		}else {
 			ball.position.x = -CONSTR.ballMaxPosX;
@@ -362,6 +603,10 @@ var camera = new THREE.PerspectiveCamera(60, el_stageWrap.offsetWidth / el_stage
 camera.position.set(0, 600, 320);
 camera.up = new THREE.Vector3(0, 1, 0);
 camera.lookAt(new THREE.Vector3(0,0,0));
+
+var cameraIdle = new THREE.PerspectiveCamera(10, el_stageWrap.offsetWidth / el_stageWrap.offsetHeight, 1, 1000);
+cameraIdle.position.y = 20;
+cameraIdle.up = new THREE.Vector3(0, 1, 0);
 
 
 
@@ -412,7 +657,7 @@ var pads = [ paddleOne, paddleTwo ];
 
 
 // ball
-var ball = new THREE.Mesh(new THREE.SphereGeometry(BALL.radius, BALL.segments, BALL.segments), matBall);
+var ball = new THREE.Mesh(new THREE.SphereGeometry(BALL.radius, BALL.segments, BALL.segments), new THREE.MeshLambertMaterial({color: 'white', transparent: true}));
 ball.castShadow = true;
 ball.position.y = BALL.radius / 2;
 scene.add(ball);
@@ -423,6 +668,7 @@ scene.add(ambientLight);
 var directionalLight = new THREE.DirectionalLight(0xffffff);
 directionalLight.castShadow = true;
 directionalLight.position.set(1, 1, 1).normalize();
+directionalLight.position.z = 20;
 directionalLight.position.y = 100;
 scene.add(directionalLight);
 
