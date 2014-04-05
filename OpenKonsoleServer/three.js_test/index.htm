@@ -13,12 +13,15 @@
 	border: 0;
 }
 
+body {
+	background: #333;
+}
+
 #stage_wrap {
 	float: left;
 	width: 800px;
 	height: 600px;
-	margin-top: 30px;
-	margin-right: 40px;
+	margin: 30px;
 }
 
 .paddle_control {
@@ -90,8 +93,10 @@ function PlayerAPIDummy() {
 	}
 }
 
-var playerOne = new PlayerAPIDummy();
-var playerTwo = new PlayerAPIDummy();
+var playerInputs = [
+	new PlayerAPIDummy(),
+	new PlayerAPIDummy()
+];
 
 
 // ======== user input from web-based test UI ========
@@ -111,13 +116,13 @@ updateControl(el_ctrl_marker_two, 0.0);
 
 function onMouseMove(evt) {
 	var posIn = (evt.y - 30) / ctrl_height - 0.5;	// dirrrty: -30 is top margin
-	var player = evt.currentTarget === el_ctrl_one ? playerOne : playerTwo;
+	var player = evt.currentTarget === el_ctrl_one ? playerInputs[0] : playerInputs[1];
 	player.setStickPos(0, posIn);
 	updateControl(evt.currentTarget === el_ctrl_one ? el_ctrl_marker_one : el_ctrl_marker_two, posIn);
 }
 
 function onMouseLeave(evt) {
-	var player = evt.currentTarget === el_ctrl_one ? playerOne : playerTwo;
+	var player = evt.currentTarget === el_ctrl_one ? playerInputs[0] : playerInputs[1];
 	player.setStickPos(0, 0);
 	updateControl(evt.currentTarget === el_ctrl_one ? el_ctrl_marker_one : el_ctrl_marker_two, 0);
 }
@@ -152,24 +157,26 @@ var COURT = {
 var BALL = {
 	radius: 8,
 	segments: 32,
-	bounceHeight: 14
+	bounceHeight: 14,
+	bounceRate: 250
 }
 
 var CAMERA = {
 	ballTrackFactorX: 0.02,
 	ballTrackFactorY: 0.01,
-	ballTrackFactorZ: 0.05
+	ballTrackFactorZ: 0.02
 }
 
 
 var CONSTR = {
 	paddleMaxSpeed: 24,
 	paddleSpeedDampingFactor: 0.8,
-	paddleSpeedGainAmount: 8,
+	paddleSpeedGainAmount: 0.4,	// 1/ms
 	paddleMaxPos: (COURT.size.z - PAD.size.z) / 2,
 	ballMaxPosX: (COURT.size.x - BALL.radius - 2 * PAD.size.x) / 2,
 	ballMaxPosZ: (COURT.size.z - BALL.radius) / 2,
-	ballSpeed: 4
+	ballSpeed: 0.3,	// 1/ms
+	ballLostTimeout: 3000 // ms
 }
 
 
@@ -202,7 +209,7 @@ function Ball(initAngleRad) {
 	var angle = initAngleRad;
 	var posX = 0, posZ = 0;
 
-	this.move = function(dist) { // TODO param
+	this.move = function(dist) {
 		posX += dist * Math.cos(angle);
 		posZ += dist * Math.sin(angle);
 	}
@@ -229,6 +236,10 @@ var lgPaddles = [
 
 var lgBall = new Ball(Math.PI / 4);		// = 45°; TODO random initial ball angle
 
+
+// materials
+var matBall = new THREE.MeshLambertMaterial({color: 'white', transparent: true});
+
 var el_stageWrap = document.querySelector('#stage_wrap');
 
 var lastTime = 0;
@@ -239,6 +250,12 @@ function animate(){
 	var time = (new Date()).getTime();
 	var timeDiff = time - lastTime;
 	lastTime = time;
+
+	// prevent too high value being passed,
+	// pass 60fps interval instead
+	if(timeDiff === time) {
+		timeDiff = 17;
+	}
 
 	updatePads(timeDiff);
 	updateBall(time, timeDiff);
@@ -262,22 +279,15 @@ function updatePads(elapsedTime) {
 	// update paddle movements/positions
 	for(var i=0; i<lgPaddles.length; i++) {
 
-		// TODO ugly...
-		var paddle = paddleOne, player = playerOne;
-		if(i === 1) {
-			paddle = paddleTwo; player = playerTwo;
-		}
+		lgPaddles[i].addSpeed(playerInputs[i].getStickPosRaw().y * CONSTR.paddleSpeedGainAmount * elapsedTime);
 
-		// TODO normalize against timeDiff
-		lgPaddles[i].addSpeed(player.getStickPosRaw().y * CONSTR.paddleSpeedGainAmount);
+		pads[i].position.z += lgPaddles[i].getSpeed();
 
-		paddle.position.z += lgPaddles[i].getSpeed();
-
-		if(paddle.position.z > CONSTR.paddleMaxPos) {
-			paddle.position.z = CONSTR.paddleMaxPos;
+		if(pads[i].position.z > CONSTR.paddleMaxPos) {
+			pads[i].position.z = CONSTR.paddleMaxPos;
 			lgPaddles[i].brakeToStop();
-		}else if(paddle.position.z < -CONSTR.paddleMaxPos) {
-			paddle.position.z = -CONSTR.paddleMaxPos;
+		}else if(pads[i].position.z < -CONSTR.paddleMaxPos) {
+			pads[i].position.z = -CONSTR.paddleMaxPos;
 			lgPaddles[i].brakeToStop();
 		}
 	}
@@ -285,21 +295,20 @@ function updatePads(elapsedTime) {
 
 
 function updateBall(time, elapsedTime) {
-	// update ball
-	lgBall.move(CONSTR.ballSpeed);	// TODO normalize against timeDiff
 
-	// TODO normalize against timeDiff
-	// TODO to constant / formula
-	var bounceY = Math.abs(Math.sin(time / 200) * BALL.bounceHeight);
+	lgBall.move(CONSTR.ballSpeed * elapsedTime);
+
+	var bounceY = Math.abs(Math.sin(time / BALL.bounceRate) * BALL.bounceHeight);
 
 	ball.position.x = lgBall.getX();
-	ball.position.y = bounceY;
 	ball.position.z = lgBall.getZ();
 
 	if(lgBall.isLost) {
-
+		matBall.opacity -= 0.003 * elapsedTime;
 		return;
 	}
+
+	ball.position.y = bounceY;
 
 	// TODO does it make sense to calculate the clipped pos more precisely?
 	if(ball.position.z > CONSTR.ballMaxPosZ) {
@@ -312,8 +321,8 @@ function updateBall(time, elapsedTime) {
 
 	if(ball.position.x > CONSTR.ballMaxPosX) {
 
-		if(ball.position.z < paddleTwo.position.z - PAD.size.z / 2
-			|| ball.position.z > paddleTwo.position.z + PAD.size.z / 2) {
+		if(ball.position.z < pads[1].position.z - PAD.size.z / 2
+			|| ball.position.z > pads[1].position.z + PAD.size.z / 2) {
 			// out!
 			console.log('OUUUUUUUUT TO THE RIGHT!!!!!!!')
 			// TODO handle
@@ -325,8 +334,8 @@ function updateBall(time, elapsedTime) {
 
 	}else if(ball.position.x < -CONSTR.ballMaxPosX) {
 
-		if(ball.position.z < paddleOne.position.z - PAD.size.z / 2
-			|| ball.position.z > paddleOne.position.z + PAD.size.z / 2) {
+		if(ball.position.z < pads[0].position.z - PAD.size.z / 2
+			|| ball.position.z > pads[0].position.z + PAD.size.z / 2) {
 			// out!
 			console.log('OUUUUUUUUT TO THE LEFT!!!!!!!')
 			// TODO handle
@@ -399,9 +408,11 @@ paddleTwo.overdraw = true;
 paddleTwo.castShadow = true;
 scene.add(paddleTwo);
 
+var pads = [ paddleOne, paddleTwo ];
+
 
 // ball
-var ball = new THREE.Mesh(new THREE.SphereGeometry(BALL.radius, BALL.segments, BALL.segments), new THREE.MeshLambertMaterial({color: 'white'}));
+var ball = new THREE.Mesh(new THREE.SphereGeometry(BALL.radius, BALL.segments, BALL.segments), matBall);
 ball.castShadow = true;
 ball.position.y = BALL.radius / 2;
 scene.add(ball);
