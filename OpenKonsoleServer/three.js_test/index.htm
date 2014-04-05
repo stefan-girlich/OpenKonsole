@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>three.js - playground</title>
+
+	<script src="three/build/three.min.js"></script>
+
+<style>
+
+* {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+#stage_wrap {
+	float: left;
+	width: 800px;
+	height: 600px;
+	margin-top: 30px;
+	margin-right: 40px;
+}
+
+.paddle_control {
+	position: relative;
+	margin-top: 30px;
+	float: left;
+	margin-right: 40px;
+	width: 180px;
+	height: 600px;
+}
+
+.paddle_control .marker {
+	position: absolute;
+	width: 100%;
+	height: 1px;
+	background: white;
+}
+
+#control_one {
+	background: blue;
+}
+#control_two {
+	background: red;
+}
+
+</style>
+</head>
+
+
+<body>
+
+<div id="stage_wrap"></div>
+
+<div id="control_one" class="paddle_control"><div class="marker"></div></div>
+<div id="control_two" class="paddle_control"><div class="marker"></div></div>
+
+<script>
+
+
+// ======== dummy openKonsole Player API ==========
+function PlayerAPIDummy() {
+
+	var self = this;
+
+	var callbacks = {
+		'connected': null,
+		'disconnected': null,
+		'stickPositionChanged': null,
+		'stickPositionChangedRaw': null,
+		'buttonChanged': null
+	};
+
+	var stickPosRaw = {x: 0, y: 0};
+
+	this.on = function(eventType, callback) {
+		callbacks[eventType] = callback;
+	}
+
+	this.setStickPos = function(x, y) {
+		stickPosRaw.x = x;
+		stickPosRaw.y = y;
+		dispatchEvent('stickPositionChangedRaw', stickPosRaw);
+	}
+
+	this.getStickPosRaw = function() { return stickPosRaw; };
+
+	function dispatchEvent(type, data) {
+		if(callbacks[type])		callbacks[type](self, data);
+	}
+}
+
+var playerOne = new PlayerAPIDummy();
+var playerTwo = new PlayerAPIDummy();
+
+
+// ======== user input from web-based test UI ========
+var el_ctrl_one = document.getElementById('control_one'),
+	el_ctrl_two = document.getElementById('control_two'),
+	el_ctrl_marker_one = el_ctrl_one.querySelector('.marker'),
+	el_ctrl_marker_two = el_ctrl_two.querySelector('.marker');
+
+	ctrl_height = el_ctrl_one.offsetHeight;
+
+el_ctrl_one.onmousemove = el_ctrl_two.onmousemove = onMouseMove;
+el_ctrl_one.onmouseleave = el_ctrl_two.onmouseleave = onMouseLeave;
+
+updateControl(el_ctrl_marker_one, 0.0);
+updateControl(el_ctrl_marker_two, 0.0);
+
+
+function onMouseMove(evt) {
+	var posIn = (evt.y - 30) / ctrl_height - 0.5;	// dirrrty: -30 is top margin
+	var player = evt.currentTarget === el_ctrl_one ? playerOne : playerTwo;
+	player.setStickPos(0, posIn);
+	updateControl(evt.currentTarget === el_ctrl_one ? el_ctrl_marker_one : el_ctrl_marker_two, posIn);
+}
+
+function onMouseLeave(evt) {
+	var player = evt.currentTarget === el_ctrl_one ? playerOne : playerTwo;
+	player.setStickPos(0, 0);
+	updateControl(evt.currentTarget === el_ctrl_one ? el_ctrl_marker_one : el_ctrl_marker_two, 0);
+}
+
+function updateControl(markerEl, pos) {
+	markerEl.style.top = (pos + 0.5) * ctrl_height + 'px';
+}
+
+
+
+
+// ========== game logic, 3D representation ===========
+
+var PADDLE_SIZE = {
+	x: 5,
+	y: 5,
+	z: 20
+};
+
+var COURT_SIZE = {
+	x: 200,
+	y: 0.000001,
+	z: 100
+}
+
+var BALL = {
+	radius: 2,
+	segments: 32,
+	bounceHeight: 5,
+}
+
+
+var CONSTR = {
+	paddleMaxSpeed: 5,
+	paddleSpeedDampingFactor: 0.8,
+	paddleSpeedGainAmount: 2,
+	paddleMaxPos: (COURT_SIZE.z - PADDLE_SIZE.z) / 2,
+	ballSpeed: 3
+}
+
+
+function PlayerPaddle() {
+
+	var speed = 0;
+
+	this.addSpeed = function(speedAmt) {
+		speed += speedAmt;
+		speed *= CONSTR.paddleSpeedDampingFactor;
+		if(Math.abs(speed) < 0.00000001) speed = 0;
+		if(speed > CONSTR.paddleMaxSpeed) {
+			speed = CONSTR.paddleMaxSpeed;
+		}else if(speed < -CONSTR.paddleMaxSpeed) {
+			speed = -CONSTR.paddleMaxSpeed;
+		}
+	}
+
+	this.brakeToStop = function() {
+		speed = 0;
+	}
+
+	this.getSpeed = function() {
+		return speed;
+	}
+}
+
+
+function Ball(initAngleRad) {
+	var angle = initAngleRad;
+	var posX = 0, posY = 0;
+
+	this.move = function(dist) { // TODO param
+		// TODO impl
+		//posX += dist;
+		//posY += dist;
+	}
+
+	this.getX = function() {
+		return posX;
+	}
+
+	this.getY = function() {
+		return posY;
+	}
+
+
+}
+
+// run-time game logic params
+var lgPaddles = [
+	new PlayerPaddle(),
+	new PlayerPaddle()
+];
+
+var lgBall = new Ball(Math.PI / 2);		// TODO random initial ball angle
+
+var el_stageWrap = document.querySelector('#stage_wrap');
+
+var lastTime = 0;
+
+// this function is executed on each animation frame
+function animate(){
+	// update
+	var time = (new Date()).getTime();
+	var timeDiff = time - lastTime;
+	lastTime = time;
+
+	// update paddle movements/positions
+	for(var i=0; i<lgPaddles.length; i++) {
+
+		// TODO ugly...
+		var paddle = paddleOne, player = playerOne;
+		if(i === 1) {
+			paddle = paddleTwo; player = playerTwo;
+		}
+
+		// TODO normalize against timeDiff
+		lgPaddles[i].addSpeed(player.getStickPosRaw().y * CONSTR.paddleSpeedGainAmount);
+
+		paddle.position.z += lgPaddles[i].getSpeed();
+
+		if(paddle.position.z > CONSTR.paddleMaxPos) {
+			paddle.position.z = CONSTR.paddleMaxPos;
+			lgPaddles[i].brakeToStop();
+		}else if(paddle.position.z < -CONSTR.paddleMaxPos) {
+			paddle.position.z = -CONSTR.paddleMaxPos;
+			lgPaddles[i].brakeToStop();
+		}
+	}
+
+	// update ball
+	lgBall.move(CONSTR.ballSpeed);
+
+	// TODO normalize against timeDiff
+	// TODO to constant / formula
+	var bounceY = Math.abs(Math.sin(time / 200) * BALL.bounceHeight);
+
+	ball.position.x = lgBall.getX();
+	ball.position.y = bounceY;
+	ball.position.z = lgBall.getY();
+
+	renderer.render(scene, camera);	// render
+
+	// request new frame
+	requestAnimationFrame(function(){
+	    animate();
+	});
+}
+
+// renderer
+var renderer = new THREE.WebGLRenderer();
+renderer.setSize(el_stageWrap.offsetWidth, el_stageWrap.offsetHeight);
+renderer.setClearColorHex(0xbbbbbb, 1);
+
+
+el_stageWrap.appendChild(renderer.domElement);
+
+// camera
+var camera = new THREE.PerspectiveCamera(60, el_stageWrap.offsetWidth / el_stageWrap.offsetHeight, 1, 1000);
+camera.position.set(0, 150, 50);
+camera.up = new THREE.Vector3(0, 1, 0);
+camera.lookAt(new THREE.Vector3(0,0,0));
+
+
+
+// enable shadow rendering
+renderer.shadowMapEnabled = true;
+renderer.shadowMapSoft = true;
+
+renderer.shadowCameraNear = 3;
+renderer.shadowCameraFar = camera.far;
+renderer.shadowCameraFov = 50;
+
+renderer.shadowMapBias = 0.0039;
+renderer.shadowMapDarkness = 0.5;
+renderer.shadowMapWidth = 1024;
+renderer.shadowMapHeight = 1024;
+
+
+
+// scene
+var scene = new THREE.Scene();
+
+// court
+var court = new THREE.Mesh(new THREE.CubeGeometry(COURT_SIZE.x, COURT_SIZE.y, COURT_SIZE.z), new THREE.MeshLambertMaterial({color: 'white' }));
+court.receiveShadow = true;
+court.position.y = - PADDLE_SIZE.y / 2;
+court.overdraw = true;
+scene.add(court);
+        
+// paddles
+var paddleOne = new THREE.Mesh(new THREE.CubeGeometry(PADDLE_SIZE.x, PADDLE_SIZE.y, PADDLE_SIZE.z), new THREE.MeshLambertMaterial({color: 'blue' }));
+paddleOne.position.x = -(COURT_SIZE.x / 2 - PADDLE_SIZE.x / 2);
+paddleOne.overdraw = true;
+scene.add(paddleOne);
+var paddleTwo = new THREE.Mesh(new THREE.CubeGeometry(PADDLE_SIZE.x, PADDLE_SIZE.y, PADDLE_SIZE.z), new THREE.MeshLambertMaterial({color: 'red' }));
+paddleTwo.position.x = (COURT_SIZE.x / 2 - PADDLE_SIZE.x / 2);
+paddleTwo.overdraw = true;
+scene.add(paddleTwo);
+
+
+// ball
+var ball = new THREE.Mesh(new THREE.SphereGeometry(BALL.radius, BALL.segments, BALL.segments), new THREE.MeshLambertMaterial({color: 'white'}));
+ball.castShadow = true;
+ball.position.y = BALL.radius / 2;
+scene.add(ball);
+
+// hit the lights!
+var ambientLight = new THREE.AmbientLight(0x353535);
+scene.add(ambientLight);
+var directionalLight = new THREE.DirectionalLight(0xffffff);
+directionalLight.castShadow = true;
+directionalLight.position.set(1, 1, 1).normalize();
+directionalLight.position.y = 20;
+scene.add(directionalLight);
+
+
+// show axis in 3D space
+// "The X axis is red. The Y axis is green. The Z axis is blue."
+var axisHelper = new THREE.AxisHelper( 100 );
+axisHelper.position.z = 200;
+axisHelper.position.x = -100;
+scene.add(axisHelper);
+
+// start animation
+animate();
+
+
+
+
+
+
+</script>
+
+</body>
+</html>
