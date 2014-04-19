@@ -16,24 +16,21 @@ dns.lookup(os.hostname(), function (error, address, family) {
 });
 
 var broadcastSrv;
-var playerSrv;
+var playerSrv = new srv.PlayerServer();;
 
 // seems to be visible in node-webkit; better hide and provide API method
-var players;
+var players = playerSrv.getPlayers();
 
 
 
 function startServer(){
 
-// TODO constructor args vs .listen() args
-broadcastSrv = new srv.BroadcastServer(HOST, UDP_PORT, 3000, TCP_PORT);
-broadcastSrv.start();
-console.log("BroadcastServer started");
+	// TODO constructor args vs .listen() args
+	broadcastSrv = new srv.BroadcastServer(HOST, UDP_PORT, 3000, TCP_PORT);
+	broadcastSrv.start();
+	console.log("BroadcastServer started");
 
-playerSrv = new srv.PlayerServer();
-playerSrv.listen(TCP_PORT, HOST);
-// seems to be visible in node-webkit; better hide and provide API method
-players = playerSrv.getPlayers();
+	playerSrv.listen(TCP_PORT, HOST);
 };
 
 

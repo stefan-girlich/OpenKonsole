@@ -180,9 +180,10 @@ var PlayerRegistry = function() {
 function PlayerServer() {
 
 	var playerRegistry = new PlayerRegistry();
+
 	var srv = net.createServer(function(socket) {
 
-		//console.log('client connected to server: ' + socket.remoteAddress + ':' + socket.remotePort);
+		console.log('client connected to server: ' + socket.remoteAddress + ':' + socket.remotePort);
 
 		var player = playerRegistry.register(socket),
 			playerID = playerRegistry.getPlayerID(socket);
@@ -197,11 +198,12 @@ function PlayerServer() {
 
 		function onDataReceived(data) {
 			//console.log('client sent message: ' + socket.remoteAddress + ':' + socket.remotePort);
-			//console.log('======= PLAYER ' + playerID + '=======')
+			console.log('======= PLAYER ' + playerID + '=======')
 
 			var dataArr = new Uint8Array(util.toArrayBuffer(data));
 			if(dataArr[0] < 5) { // action type: button
 				player.setButtonState((dataArr[0] - 1), dataArr[1] === 0);
+				console.log('---> ' + (dataArr[0] - 1) + ', ' + (dataArr[1] === 0))
 			}else {	// action type: analog input
 				player.setStickPos((dataArr[1] / ANALOG_RANGE_MAX) - 0.5, (dataArr[2] / ANALOG_RANGE_MAX) - 0.5);
 			}
@@ -259,7 +261,7 @@ function BroadcastServer(hostAddr, port, intervalMs, consoleTcpPort) {
 	this.start = function() {
 		this.stop();
 		timer = setInterval(function() {
-			console.log('BroadcastServer: sending broadcast message to ' + broadcastAddress + ', message: ' + msg);
+			//console.log('BroadcastServer: sending broadcast message to ' + broadcastAddress + ', message: ' + msg);
 			udpClient.send(msgBuf, 0, msgBuf.length, port, broadcastAddress, onError);
 		}, intervalMs);
 	}
