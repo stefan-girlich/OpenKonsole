@@ -267,7 +267,7 @@ function BroadcastServer(hostAddr, port, intervalMs, consoleTcpPort) {
 	this.start = function() {
 		this.stop();
 		timer = setInterval(function() {
-			console.log('BroadcastServer: sending broadcast message to ' + broadcastAddress + ', message: ' + msg);
+			//console.log('BroadcastServer: sending broadcast message to ' + broadcastAddress + ', message: ' + msg);
 			udpClient.send(msgBuf, 0, msgBuf.length, port, broadcastAddress, onError);
 		}, intervalMs);
 	}
@@ -297,7 +297,7 @@ function IpSniffer(hostAddr, port, intervalMs, consoleTcpPort){
 	function ping(){
 		ipRange.map(function(currentValue){
 		if(currentValue != 'null'){
-		console.log("UDP Ping sent to: "+broadcastAddress+currentValue);
+		// console.log("UDP Ping sent to: "+broadcastAddress+currentValue);
 		udpClient.send(msgBuf, 0, msgBuf.length, port, broadcastAddress + currentValue, function(err){if(err != null){console.log(err);}});
 		}
 		return currentValue;
