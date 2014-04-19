@@ -1,5 +1,18 @@
 var net = require('net');
 var dgram = require('dgram');
+var udpClient = dgram.createSocket("udp4");
+var ipRange = getIpRange(1,254);
+udpClient.on('error' ,function(err) {
+			console.log('dammit!!!')
+});
+
+function getIpRange(min, max){
+	var result = [];
+	for (var i = min; i <= max; i++){
+		result.push(''+i);
+	}
+	return result;
+};
 
 
 var ANALOG_RANGE_MAX = 254; // 2^8 - 1 - 1 (to enable integer center positions)
@@ -241,20 +254,15 @@ function BroadcastServer(hostAddr, port, intervalMs, consoleTcpPort) {
 	var broadcastAddress = hostAddr.split('.');
 	broadcastAddress.pop();
 
-	//broadcastAddress.push('255');	
-	broadcastAddress.push('42');	// ATTENTION: debug override since broadcast is not working for Steve
+	broadcastAddress.push('255');	
+	//broadcastAddress.push('42');	// ATTENTION: debug override since broadcast is not working for Steve
 
 
 	broadcastAddress = broadcastAddress.join('.');
+	
+	var msg = 'OPENKONSOLE:' + hostAddr + ':' + '' + consoleTcpPort, msgBuf = new Buffer(msg);
 
-	var msg = 'OPENKONSOLE:' + hostAddr + ':' + '' + consoleTcpPort,
-		msgBuf = new Buffer(msg);
-
-	var timer,
-		udpClient = dgram.createSocket("udp4");
-		udpClient.on('error' ,function(err) {
-			console.log('dammit!!!')
-		})
+	var timer;
 
 	this.start = function() {
 		this.stop();
@@ -267,7 +275,7 @@ function BroadcastServer(hostAddr, port, intervalMs, consoleTcpPort) {
 	this.stop = function() {
 		if(timer) clearInterval(timer);
 	}
-
+	
 	function onError(err, bytes) {
 		if(err) {
 			console.log('An error occurred while trying to broadcast. Error and stack trace:');
@@ -277,6 +285,40 @@ function BroadcastServer(hostAddr, port, intervalMs, consoleTcpPort) {
 	}
 }
 
+function IpSniffer(hostAddr, port, intervalMs, consoleTcpPort){
+	var timer;
+	var msg = 'OPENKONSOLE:' + hostAddr + ':' + '' + consoleTcpPort,
+	msgBuf = new Buffer(msg);
+
+	var broadcastAddress = hostAddr.split('.');
+	broadcastAddress.pop();
+	broadcastAddress = broadcastAddress.join('.') + '.';
+	
+	function ping(){
+		ipRange.map(function(currentValue){
+		if(currentValue != 'null'){
+		console.log("UDP Ping sent to: "+broadcastAddress+currentValue);
+		udpClient.send(msgBuf, 0, msgBuf.length, port, broadcastAddress + currentValue, function(err){if(err != null){console.log(err);}});
+		}
+		return currentValue;
+		});
+	};
+	
+	this.start = function() {
+		this.stop();
+		timer = setInterval(function() {
+			//console.log('BroadcastServer: sending broadcast message to ' + broadcastAddress + ', message: ' + msg);
+			ping();
+		}, intervalMs);
+	}
+
+
+	this.stop = function() {
+		if(timer) clearInterval(timer);
+	}
+}
+
 
 exports.BroadcastServer = BroadcastServer;
 exports.PlayerServer = PlayerServer;
+exports.IpSniffer = IpSniffer;

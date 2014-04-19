@@ -17,6 +17,7 @@ dns.lookup(os.hostname(), function (error, address, family) {
 
 var broadcastSrv;
 var playerSrv;
+var ipSniffer;
 
 // seems to be visible in node-webkit; better hide and provide API method
 var players;
@@ -29,20 +30,21 @@ function startServer(){
 broadcastSrv = new srv.BroadcastServer(HOST, UDP_PORT, 3000, TCP_PORT);
 broadcastSrv.start();
 console.log("BroadcastServer started");
-
+ipSniffer = new srv.IpSniffer(HOST, UDP_PORT, 3000, TCP_PORT);
+ipSniffer.start();
 playerSrv = new srv.PlayerServer();
 playerSrv.listen(TCP_PORT, HOST);
 // seems to be visible in node-webkit; better hide and provide API method
 players = playerSrv.getPlayers();
+console.log("Server started!");
 };
 
 
 // TODO what other signals to catch?
 process.on('SIGINT', function() {
 	console.log( "\nGracefully shutting down from SIGINT (Ctrl-C)" );
-	
 	broadcastSrv.stop();
 	playerSrv.stop();
-
+	ipSniffer.stop();
 	process.exit();
 });
