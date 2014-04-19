@@ -1,9 +1,0 @@
-{
-  "name": "nw-demo",
-  "main": "test_stick_position_api_async.html",
-  "window": {
-  	/**"fullscreen": true*/
-  	"min_width": 1280,
-  	"min_height": 768
-  }
-}

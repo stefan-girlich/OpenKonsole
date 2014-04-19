@@ -1,3 +1,7 @@
 OpenKonsoleClientAndroid/bin/
 OpenKonsoleClientAndroid/gen/
 OpenKonsoleClientAndroid/.apt_generated/
+OpenKonsoleServer/node_modules/
+OpenKonsoleServer/releases/
+OpenKonsoleServer/cache/
+npm-debug.log

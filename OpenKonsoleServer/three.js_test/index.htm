@@ -115,112 +115,7 @@ body {
 	</div>
 </div>
 
-<div id="control_one" class="paddle_control"><div class="marker"></div></div>
-<div id="btn_one" class="button">A</div>
-<div id="control_two" class="paddle_control"><div class="marker"></div></div>
-<div id="btn_two" class="button">A</div>
-
 <script>
-
-
-// ======== dummy openKonsole Player API ==========
-function PlayerAPIDummy() {
-
-	var self = this;
-
-	var callbacks = {
-		'connected': null,
-		'disconnected': null,
-		'stickPositionChanged': null,
-		'stickPositionChangedRaw': null,
-		'buttonChanged': null
-	};
-
-	var stickPosRaw = {x: 0, y: 0};
-	var btns = [true,true]
-
-	this.on = function(eventType, callback) {
-		callbacks[eventType] = callback;
-	}
-
-	this.setStickPos = function(x, y) {
-		stickPosRaw.x = x;
-		stickPosRaw.y = y;
-		dispatchEvent('stickPositionChangedRaw', stickPosRaw);
-	}
-
-	this.setButtonState = function(btnId, isDown) {
-		btns[btnId] = isDown;
-		dispatchButtonEvent('buttonChanged', btnId, isDown);
-	}
-
-	this.getStickPosRaw = function() { return stickPosRaw; };
-
-	function dispatchEvent(type, data) {
-		if(callbacks[type])		callbacks[type](self, data);
-	}
-
-	function dispatchButtonEvent(type, btnIx, downState) {
-		if(callbacks[type])		callbacks[type](self, btnIx, downState);
-	}
-}
-
-var playerInputs = [
-	new PlayerAPIDummy(),
-	new PlayerAPIDummy()
-];
-
-
-// ======== user input from web-based test UI ========
-var el_ctrl_one = document.getElementById('control_one'),
-	el_ctrl_two = document.getElementById('control_two'),
-	el_ctrl_marker_one = el_ctrl_one.querySelector('.marker'),
-	el_ctrl_marker_two = el_ctrl_two.querySelector('.marker'),
-	el_btn_one = document.getElementById('btn_one'),
-	el_btn_two = document.getElementById('btn_two');
-
-	ctrl_height = el_ctrl_one.offsetHeight;
-
-el_ctrl_one.onmousemove = el_ctrl_two.onmousemove = onMouseMove;
-el_ctrl_one.onmouseleave = el_ctrl_two.onmouseleave = onMouseLeave;
-
-el_btn_one.onmousedown = onButtonMouseDown;
-el_btn_one.onmouseup = onButtonMouseUp;
-el_btn_two.onmousedown = onButtonMouseDown;
-el_btn_two.onmouseup = onButtonMouseUp;
-
-updateControl(el_ctrl_marker_one, 0.0);
-updateControl(el_ctrl_marker_two, 0.0);
-
-
-function onButtonMouseDown(evt) {
-	var playerIx = evt.currentTarget === el_btn_one ? 0 : 1;
-	playerInputs[playerIx].setButtonState(0, true)
-}
-function onButtonMouseUp(evt) {
-	var playerIx = evt.currentTarget === el_btn_one ? 0 : 1;
-	playerInputs[playerIx].setButtonState(0, false)
-}
-
-function onMouseMove(evt) {
-	var posIn = (evt.y - 30) / ctrl_height - 0.5;	// dirrrty: -30 is top margin
-	var player = evt.currentTarget === el_ctrl_one ? playerInputs[0] : playerInputs[1];
-	player.setStickPos(0, posIn);
-	updateControl(evt.currentTarget === el_ctrl_one ? el_ctrl_marker_one : el_ctrl_marker_two, posIn);
-}
-
-function onMouseLeave(evt) {
-	var player = evt.currentTarget === el_ctrl_one ? playerInputs[0] : playerInputs[1];
-	player.setStickPos(0, 0);
-	updateControl(evt.currentTarget === el_ctrl_one ? el_ctrl_marker_one : el_ctrl_marker_two, 0);
-}
-
-function updateControl(markerEl, pos) {
-	markerEl.style.top = (pos + 0.5) * ctrl_height + 'px';
-}
-
-
-
 
 
 // ========== game logic, 3D representation ===========
@@ -354,8 +249,8 @@ var countdownRemaining = CONSTR.countDownTime * 1000;
 
 
 // catch user button press releases asynchronously
-playerInputs[0].on('buttonChanged', onUserButtonPress);
-playerInputs[1].on('buttonChanged', onUserButtonPress);
+players[0].on('buttonChanged', onUserButtonPress);
+players[1].on('buttonChanged', onUserButtonPress);
 function onUserButtonPress(player, btnId, down) {
 	if(!down) {
 		switch(gameState) {
@@ -521,7 +416,7 @@ function updatePads(elapsedTime) {
 	// update paddle movements/positions
 	for(var i=0; i<lgPaddles.length; i++) {
 
-		lgPaddles[i].addSpeed(playerInputs[i].getStickPosRaw().y * CONSTR.paddleSpeedGainAmount * elapsedTime);
+		lgPaddles[i].addSpeed(players[i].getStickPosRaw().y * CONSTR.paddleSpeedGainAmount * elapsedTime);
 
 		pads[i].position.z += lgPaddles[i].getSpeed();
 
