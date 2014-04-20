@@ -1,0 +1,26 @@
+{
+  "name": "openKonsoleServer",
+  "version": "0.0.0",
+  "description": "Server der OpenKonsole Anwendung",
+  "main": "./html/index.html",
+  "moduleType": [
+    "node"
+  ],
+  "license": "MIT",
+  "private": true,
+  "dependencies":{
+	"threejs": "latest"
+  },
+  "exportsOverride": {
+	"threejs": {
+      "js": "**/*.js"
+	  }
+   },
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

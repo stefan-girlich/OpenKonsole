@@ -5,3 +5,6 @@ OpenKonsoleServer/node_modules/
 OpenKonsoleServer/releases/
 OpenKonsoleServer/cache/
 npm-debug.log
+OpenKonsoleServer/pongApp/node_modules/
+OpenKonsoleServer/pongApp/lib/
+OpenKonsoleServer/bower_components/
