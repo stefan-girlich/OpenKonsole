@@ -9,10 +9,14 @@
   "license": "MIT",
   "private": true,
   "dependencies":{
-	"threejs": "latest"
+	"threejs": "latest",
+	"stats.js":"latest"
   },
   "exportsOverride": {
 	"threejs": {
+      "js": "**/*.js"
+	  },
+	  "stats.js": {
       "js": "**/*.js"
 	  }
    },
@@ -21,6 +25,14 @@
     "node_modules",
     "bower_components",
     "test",
-    "tests"
+    "tests",
+	 "*.md",
+    "bower.json",
+    "docs",
+    "editor",
+    "examples",
+    "src",
+    "utils",
+    "LICENSE"
   ]
 }
