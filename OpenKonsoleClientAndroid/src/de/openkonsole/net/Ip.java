@@ -2,6 +2,7 @@ package de.openkonsole.net;
 
 import java.io.Serializable;
 
+@Deprecated
 public class Ip implements Serializable {
 	
 	private static final long serialVersionUID = -7262249251419755357L;

@@ -288,6 +288,9 @@ function BroadcastServer(hostAddr, port, intervalMs, consoleTcpPort) {
 }
 
 function IpSniffer(hostAddr, port, intervalMs, consoleTcpPort){
+
+	var self = this;
+
 	var timer;
 	var msg = 'OPENKONSOLE:' + hostAddr + ':' + '' + consoleTcpPort,
 	msgBuf = new Buffer(msg);
@@ -298,11 +301,19 @@ function IpSniffer(hostAddr, port, intervalMs, consoleTcpPort){
 	
 	function ping(){
 		ipRange.map(function(currentValue){
-		if(currentValue != 'null'){
-		// console.log("UDP Ping sent to: "+broadcastAddress+currentValue);
-		udpClient.send(msgBuf, 0, msgBuf.length, port, broadcastAddress + currentValue, function(err){if(err != null){console.log(err);}});
-		}
-		return currentValue;
+			if(currentValue != 'null') {
+				console.log("UDP Ping sent to: "+broadcastAddress+currentValue);
+				udpClient.send(msgBuf, 0, msgBuf.length, port, broadcastAddress + currentValue, function(err) {
+					if(err != null) {
+						console.log(err);
+						//udpClient.close();
+					}
+				});
+			}else {
+				console.log('====> currentValue is actually null!!!!')
+			}
+
+			return currentValue;
 		});
 	};
 	
@@ -311,6 +322,10 @@ function IpSniffer(hostAddr, port, intervalMs, consoleTcpPort){
 		timer = setInterval(function() {
 			//console.log('BroadcastServer: sending broadcast message to ' + broadcastAddress + ', message: ' + msg);
 			ping();
+
+			// TODO STEVE workaround for EHOSTUNREACH when repeating udpClient.send invokations
+			self.stop();
+
 		}, intervalMs);
 	}
 
@@ -320,12 +335,41 @@ function IpSniffer(hostAddr, port, intervalMs, consoleTcpPort){
 	}
 }
 
+function ClientResponder(hostAddr, port, consoleTcpPort) {
 
+	var server = dgram.createSocket('udp4');
 
+	var serverInfo = {
+		host: hostAddr,
+		udpPort: port,
+		tcpPort: consoleTcpPort
+	};
 
-global.module.exports.BroadcastServer = BroadcastServer;
-global.module.exports.PlayerServer = PlayerServer;
-global.module.exports.IpSniffer = IpSniffer;
-global.module.exports.getPlayerServer = function getPlayerServer(){
-	return new PlayerServer();
+	server.on('message', function(message, rinfo) {
+	    console.log('server got message: ' + message + ' from ' + rinfo.address + ':' + rinfo.port);
+
+	    // TODO create only once?
+	    var msg = JSON.stringify(serverInfo),
+		msgBuf = new Buffer(msg);
+
+	    server.send(msgBuf, 0, msgBuf.length, port, ""+rinfo.address, function(err) {
+			if(err != null) {
+				console.log(err);
+				//udpClient.close();
+			}
+		});
+	});
+	 
+	server.on('listening', function() {
+	    var address = server.address();
+	    console.log('server listening on ' + address.address +
+	                ':' + address.port);
+	});
+	 
+	server.bind(port, '192.168.178.56');
 }
+
+module.exports.BroadcastServer = BroadcastServer;
+module.exports.PlayerServer = PlayerServer;
+module.exports.IpSniffer = IpSniffer;
+module.exports.ClientResponder = ClientResponder;

@@ -1,7 +1,8 @@
 var fs = require('fs');
 var dns = require('dns');
 var os = require('os');
-eval(fs.readFileSync('./js/server.js')+'');
+var dgram = require('dgram');
+var srv = require('./server.js');
 
 var HOST	// TODO determine this server's IP dynamically
 var TCP_PORT = 1337;
@@ -16,16 +17,23 @@ dns.lookup(os.hostname(), function (error, address, family) {
 	startServer();
 });
 
+
+console.log(srv);
+
 var broadcastSrv;
-var playerSrv = new PlayerServer();
+var playerSrv// = new srv.PlayerServer();
 var ipSniffer;
 
 // seems to be visible in node-webkit; better hide and provide API method
-var players = playerSrv.getPlayers();
+//var players = playerSrv.getPlayers();
 
 
 
 function startServer(){
+ 
+	var clientResponder = new srv.ClientResponder(HOST, UDP_PORT, TCP_PORT);
+
+	return;
 
 	console.log("IP sniffer started");	
 	ipSniffer = new IpSniffer(HOST, UDP_PORT, 3000, TCP_PORT);
