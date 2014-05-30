@@ -1,0 +1,27 @@
+{
+    "name": "application-name",
+    "version": "0.0.1",
+    "name": "openkonsole-server",
+    "version": "0.0.0",
+    "description": "This subproject directory contains the server responsible for handling client input, running game logic and displaying the game on the screen.",
+    "main": "./html/index.html",
+    "private":true,
+    "window": {
+        "min_width": 1280,
+        "min_height": 768
+    },
+    "webkit": {
+        "plugin": true
+    },
+    "chromium-args": "--enable-webgl --ignore-gpu-blacklist",
+    "repository": {
+        "type": "git",
+        "url": "http://github.com/npm/npm.git"
+    },
+    "author": "",
+    "license": "BSD",
+    "readmeFilename": "README.md",
+    "dependencies":{
+        "jade":"latest"
+    }
+}

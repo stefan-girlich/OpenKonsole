@@ -8,3 +8,7 @@ npm-debug.log
 OpenKonsoleServer/pongApp/node_modules/
 OpenKonsoleServer/pongApp/lib/
 OpenKonsoleServer/bower_components/
+OpenKonsoleServer/.idea/
+OpenKonsoleServer/app/lib/
+OpenKonsoleServer/app/node_modules/
+OpenKonsoleServer/app/html/

@@ -1,16 +1,20 @@
 {
-  "name": "do-my-build",
-  "version": "0.0.1",
-  "description": "Using Grunt to build my little program",
-  "author": "Gaylord Fucker",
-  "private": true,
-  "dependencies": {
-    "grunt": "^0.4.4",
-    "grunt-node-webkit-builder": "^0.1.20"
-  },
+    "name": "openkonsole-server",
+    "version": "0.0.0",
+    "description": "This subproject directory contains the server responsible for handling client input, running game logic and displaying the game on the screen.",
+    "main": "./app/views/index.jade",
+    "private":true,
+    "author": "",
+    "license": "BSD",
+    "readmeFilename": "README.md",
   "devDependencies": {
-    "grunt-contrib-clean": "^0.5.0",
-    "grunt-contrib-jade": "^0.11.0",
-    "grunt-bower-task": "^0.3.4"
+    "grunt-contrib-clean": "latest",
+    "grunt-contrib-jade": "latest",
+    "grunt-bower-task": "latest",
+    "grunt-node-webkit-builder": "latest",
+    "grunt": "latest",
+    "jade": "latest",
+    "nodewebkit":"latest",
+    "bower":"latest"
   }
 }

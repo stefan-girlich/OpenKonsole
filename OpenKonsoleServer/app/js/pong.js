@@ -1,6 +1,6 @@
 javascript:(function(){var script=document.createElement('script');script.src='http://github.com/mrdoob/stats.js/raw/master/build/stats.min.js';document.body.appendChild(script);script=document.createElement('script');script.innerHTML='var interval=setInterval(function(){if(typeof Stats==\'function\'){clearInterval(interval);var stats=new Stats();stats.domElement.style.position=\'fixed\';stats.domElement.style.left=\'0px\';stats.domElement.style.top=\'0px\';stats.domElement.style.zIndex=\'10000\';document.body.appendChild(stats.domElement);setInterval(function(){stats.update();},1000/60);}},100);';document.body.appendChild(script);})();
 // ========== game logic, 3D representation ===========
-
+console.log("pong started");
 var PAD = {
 	size: {
 		x: 20,
@@ -130,6 +130,7 @@ var countdownRemaining = CONSTR.countDownTime * 1000;
 
 
 // catch user button press releases asynchronously
+console.log(players[0]);
 players[0].on('buttonChanged', onUserButtonPress);
 players[1].on('buttonChanged', onUserButtonPress);
 

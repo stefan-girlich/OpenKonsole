@@ -2,37 +2,11 @@
   "name": "openKonsoleServer",
   "version": "0.0.0",
   "description": "Server der OpenKonsole Anwendung",
-  "main": "./html/index.html",
-  "moduleType": [
-    "node"
-  ],
   "license": "MIT",
   "private": true,
   "dependencies":{
-	"threejs": "latest",
-	"stats.js":"latest"
-  },
-  "exportsOverride": {
-	"threejs": {
-      "js": "**/*.js"
-	  },
-	  "stats.js": {
-      "js": "**/*.js"
-	  }
-   },
-  "ignore": [
-    "**/.*",
-    "node_modules",
-    "bower_components",
-    "test",
-    "tests",
-	 "*.md",
-    "bower.json",
-    "docs",
-    "editor",
-    "examples",
-    "src",
-    "utils",
-    "LICENSE"
-  ]
+      "threejs":"latest",
+      "stats.js":"latest",
+      "jquery":"latest"
+  }
 }
