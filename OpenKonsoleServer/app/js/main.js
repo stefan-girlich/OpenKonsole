@@ -27,7 +27,7 @@ var playerSrv = new srv.PlayerServer();
 var ipSniffer;
 
 // seems to be visible in node-webkit; better hide and provide API method
-//var players = playerSrv.getPlayers();
+var players = playerSrv.getPlayers();
 
 
 
@@ -35,18 +35,9 @@ function startServer(){
 
     var clientResponder = new srv.ClientResponder(HOST, UDP_PORT, TCP_PORT);
 
-    return;
-
-    console.log("IP sniffer started");
-    ipSniffer = new IpSniffer(HOST, UDP_PORT, 3000, TCP_PORT);
-    ipSniffer.start();
-
-    // broadcastSrv = new srv.BroadcastServer(HOST, UDP_PORT, 3000, TCP_PORT);
-    // broadcastSrv.start();
-    //console.log("BroadcastServer started");
-
     console.log("PlayerServer started!");
     playerSrv.listen(TCP_PORT, HOST);
+    console.log($('#content').size())
     $('#content').append(jade.renderFile('./views/pong.jade'));
 };
 
