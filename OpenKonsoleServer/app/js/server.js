@@ -367,7 +367,7 @@ function ClientResponder(hostAddr, port, consoleTcpPort) {
             ':' + address.port);
     });
 
-    server.bind(port, '192.168.178.56');
+    server.bind(port, hostAddr);
 }
 
 module.exports.BroadcastServer = BroadcastServer;
