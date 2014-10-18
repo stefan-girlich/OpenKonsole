@@ -10,6 +10,10 @@ var HOST	// TODO determine this server's IP dynamically
 var TCP_PORT = 1337;
 var UDP_PORT = 30300;
 
+var GAME_FILE_NAME = './views/pong.jade'; // TODO DYN
+
+
+
 // First resolve the Host IP, then start the server.
 // family returns an integer (4 = IPv4, 6 = IPv6, null = both)
 // TODO Ensure IPv6 compatibility
@@ -19,8 +23,6 @@ dns.lookup(os.hostname(), function (error, address, family) {
     startServer();
 });
 
-
-console.log(srv);
 
 var broadcastSrv;
 var playerSrv = new srv.PlayerServer();
@@ -37,11 +39,27 @@ function startServer(){
 
     console.log("PlayerServer started!");
     playerSrv.listen(TCP_PORT, HOST);
-    console.log($('#content').size())
-    $('#content').append(jade.renderFile('./views/pong.jade'));
+    
+    
+    loadGame(GAME_FILE_NAME)
 };
 
+
+
+function loadGame(fileName) {
+    var $frame = $('#game_frame');
+    var gameContent = jade.renderFile(fileName);
+
+    // jQuery is required in order to eval scripts:
+    // http://stackoverflow.com/a/1197585
+    $frame.append(gameContent);
+}
+
+
+
+
 // TODO what other signals to catch?
+// TODO test this, is it useful at all?
 process.on('SIGINT', function() {
     console.log( "\nGracefully shutting down from SIGINT (Ctrl-C)" );
     broadcastSrv.stop();
