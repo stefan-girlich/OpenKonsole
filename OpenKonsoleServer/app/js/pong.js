@@ -1,6 +1,6 @@
 javascript:(function(){var script=document.createElement('script');script.src='http://github.com/mrdoob/stats.js/raw/master/build/stats.min.js';document.body.appendChild(script);script=document.createElement('script');script.innerHTML='var interval=setInterval(function(){if(typeof Stats==\'function\'){clearInterval(interval);var stats=new Stats();stats.domElement.style.position=\'fixed\';stats.domElement.style.left=\'0px\';stats.domElement.style.top=\'0px\';stats.domElement.style.zIndex=\'10000\';document.body.appendChild(stats.domElement);setInterval(function(){stats.update();},1000/60);}},100);';document.body.appendChild(script);})();
 // ========== game logic, 3D representation ===========
-console.log("pong started");
+
 var PAD = {
 	size: {
 		x: 20,
@@ -59,25 +59,21 @@ var CONSTR = {
 
 function PlayerPaddle() {
 
-	var speed = 0;
+	this.speed = 0;
 
 	this.addSpeed = function(speedAmt) {
-		speed += speedAmt;
-		speed *= CONSTR.paddleSpeedDampingFactor;
-		if(Math.abs(speed) < 0.00000001) speed = 0;
-		if(speed > CONSTR.paddleMaxSpeed) {
-			speed = CONSTR.paddleMaxSpeed;
-		}else if(speed < -CONSTR.paddleMaxSpeed) {
-			speed = -CONSTR.paddleMaxSpeed;
+		this.speed += speedAmt;
+		this.speed *= CONSTR.paddleSpeedDampingFactor;
+		if(Math.abs(this.speed) < 0.00000001) this.speed = 0;
+		if(this.speed > CONSTR.paddleMaxSpeed) {
+			this.speed = CONSTR.paddleMaxSpeed;
+		}else if(this.speed < -CONSTR.paddleMaxSpeed) {
+			this.speed = -CONSTR.paddleMaxSpeed;
 		}
 	}
 
 	this.brakeToStop = function() {
-		speed = 0;
-	}
-
-	this.getSpeed = function() {
-		return speed;
+		this.speed = 0;
 	}
 }
 
@@ -85,21 +81,18 @@ function PlayerPaddle() {
 function Ball(initAngleRad) {
 	var self = this;
 	var angle = initAngleRad;
-	var posX = 0, posZ = 0;
+	this.x = 0;
+	this.z = 0;
 
 	this.move = function(dist) {
-		posX += dist * Math.cos(angle);
-		posZ += dist * Math.sin(angle);
+		this.x += dist * Math.cos(angle);
+		this.z += dist * Math.sin(angle);
 	}
 
 	this.reset = function() {
 		this.isLost = false;
-		posX = posZ = 0;
-
+		this.x = this.z = 0;
 	}
-
-	this.getX = function() {	return posX;	}
-	this.getZ = function() {	return posZ;	}
 
 	this.bounceX = function() {
 		angle = Math.PI - angle;
@@ -278,8 +271,8 @@ function animate(){
 			switchGameState(STATE.countdown);
 			ball.material.opacity = 1.0;
 			lgBall.reset();
-			ball.position.x = lgBall.getX();
-			ball.position.z = lgBall.getZ();
+			ball.position.x = lgBall.x;
+			ball.position.z = lgBall.z;
 			camera.lookAt(new THREE.Vector3(ball.position.x, ball.position.y, ball.position.z));
 		}
 	}else {
@@ -301,7 +294,7 @@ function updatePads(elapsedTime) {
 
 		lgPaddles[i].addSpeed(players[i].getStickPosRaw().y * CONSTR.paddleSpeedGainAmount * elapsedTime);
 
-		pads[i].position.z += lgPaddles[i].getSpeed();
+		pads[i].position.z += lgPaddles[i].speed;
 
 		if(pads[i].position.z > CONSTR.paddleMaxPos) {
 			pads[i].position.z = CONSTR.paddleMaxPos;
@@ -320,9 +313,9 @@ function updateBall(time, elapsedTime) {
 
 	var bounceY = Math.abs(Math.sin(time / BALL.bounceRate) * BALL.bounceHeight);
 
-	ball.position.x = lgBall.getX();
+	ball.position.x = lgBall.x;
 	ball.position.y = bounceY;
-	ball.position.z = lgBall.getZ();
+	ball.position.z = lgBall.z;
 	
 	if(lgBall.isLost) return;
 
