@@ -1,0 +1,31 @@
+link(rel='stylesheet', href='main.css', type='text/css')
+script(src='main.js')
+
+
+div(template).player_info
+    div.full.player_id
+        | Player ID
+    div.full.label
+        | stick normalized:
+    div.half.pos_x
+        | 0
+    div.half.pos_y
+        | 0
+    div.full.label
+        | stick raw:
+    div.half.pos_x_raw
+        | 0
+    div.half.pos_y_raw
+        | 0
+    div.half.btn.btn0
+        | Button #0
+    div.half.btn.btn1
+        | Button #1
+    div.half.btn.btn2
+        | Button #2
+    div.half.btn.btn3
+        | Button #3
+
+canvas#stage(width='512', height='512')
+
+    

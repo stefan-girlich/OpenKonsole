@@ -1,0 +1,59 @@
+body {
+    background: #707070;
+    padding: 20px;
+}
+
+*[template] {
+    display: none;
+}
+
+#stage {
+    float: left;
+    background: #eee;
+    padding: 20px;
+    margin-right: 20px;
+}
+
+.player_info {
+    float: left;
+    position: relative;
+    width: 200px;
+    background: white;
+    margin-right: 20px;
+    margin-bottom: 20px;
+}
+
+.player_info > * {
+    float: left;
+}
+
+.player_info .full {
+    width: 90%;
+    padding: 5%;
+}
+
+.player_info .half {
+    width: 40%;
+    padding: 5%;
+}
+
+.player_info .label {
+    padding-bottom: 0px;
+}
+
+.player_info .player_id {
+    font-weight: bold;
+}
+
+.player_info .player_id.connected {
+    background: #9f9
+}
+
+.player_info .btn {
+    background: #333;
+    color: white;
+}
+
+.player_info .btn.down {
+    background: #ddd;
+}
