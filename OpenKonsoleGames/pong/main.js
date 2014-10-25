@@ -2,7 +2,7 @@
 // grabbing them right away in this script, so we use a delay for now
 setTimeout(function() {
 
-	
+
 
 // ========== game logic, 3D representation ===========
 
@@ -57,7 +57,7 @@ var CONSTR = {
 	ballMaxPosZ: (COURT.size.z - BALL.radius) / 2,
 	ballSpeed: 0.3,	// 1/ms
 	ballLostTimeout: 3000, // ms
-	countDownTime: 3, // s
+	countDownTime: 1, // s
 	pointScoredTimeout: 2 // s
 }
 
@@ -363,10 +363,10 @@ function updateBall(time, elapsedTime) {
 	}
 }
 
-
-
 // renderer
 var renderer = new THREE.WebGLRenderer();
+console.log('el_stageWrap.offsetWidth ' + el_stageWrap.offsetWidth)
+console.log('el_stageWrap.offsetHeight ' + el_stageWrap.offsetHeight)
 renderer.setSize(el_stageWrap.offsetWidth, el_stageWrap.offsetHeight);
 renderer.setClearColor(0xbbbbbb, 1);
 
@@ -449,4 +449,4 @@ scene.add(directionalLight);
 
 animate();
 
-}, 50);
+}, 150);

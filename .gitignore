@@ -12,3 +12,4 @@ OpenKonsoleServer/.idea/
 OpenKonsoleServer/app/lib/
 OpenKonsoleServer/app/node_modules/
 OpenKonsoleServer/app/html/
+OpenKonsoleServer/config.json

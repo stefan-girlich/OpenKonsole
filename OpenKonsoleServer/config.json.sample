@@ -1,0 +1,6 @@
+{
+	"gamesDirectory":	"/absolute/path/to/your/games/directory",
+	"host":				"hostname or IP address; server will try to resolve automatically if this is empty",
+    "tcpPort":          "the TCP port to use",
+    "udpPort":          "the UDP port to use"
+}

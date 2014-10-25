@@ -1,12 +1,12 @@
 {
-    "name": "openkonsole-server",
-    "version": "0.0.0",
-    "description": "This subproject directory contains the server responsible for handling client input, running game logic and displaying the game on the screen.",
-    "main": "./app/views/index.jade",
-    "private":true,
-    "author": "",
-    "license": "BSD",
-    "readmeFilename": "README.md",
+  "name": "openkonsole-server",
+  "version": "0.0.0",
+  "description": "This subproject directory contains the server responsible for handling client input, running game logic and displaying the game on the screen.",
+  "main": "./app/views/index.jade",
+  "private": true,
+  "author": "",
+  "license": "BSD",
+  "readmeFilename": "README.md",
   "devDependencies": {
     "grunt-contrib-clean": "latest",
     "grunt-contrib-jade": "latest",
@@ -14,7 +14,8 @@
     "grunt-node-webkit-builder": "latest",
     "grunt": "latest",
     "jade": "latest",
-    "nodewebkit":"latest",
-    "bower":"latest"
-  }
+    "nodewebkit": "latest",
+    "bower": "latest"
+  },
+  "dependencies": {}
 }
