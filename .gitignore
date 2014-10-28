@@ -1,6 +1,10 @@
 OpenKonsoleClientAndroid/bin/
 OpenKonsoleClientAndroid/gen/
 OpenKonsoleClientAndroid/.apt_generated/
+
+OpenKonsoleClientNode/node_modules
+OpenKonsoleClientNode/node_modules/*
+
 OpenKonsoleServer/node_modules/
 OpenKonsoleServer/releases/
 OpenKonsoleServer/cache/
