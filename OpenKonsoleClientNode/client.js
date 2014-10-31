@@ -19,21 +19,21 @@ function Client(cb) {
 	var client = new net.Socket();
 
 	client.on('close', function() {
-		console.log('Connection closed');
+		log('Connection closed');
 	});
 
 	client.on('data', function(data) {
-		console.log('DATA: ' + data);
 		cb(data);
 	});
 
 	this.connect = function() {
 		client.connect(PORT, HOST, function() {
-			console.log('connected to OK server: ' + HOST + ':' + PORT);
+			log('connected to OK server: ' + HOST + ':' + PORT);
 		});
 	}
 
 	this.disconnect = function() {
+		log('disconnected from OK server');
 		client.destroy();
 	}
 
@@ -41,7 +41,6 @@ function Client(cb) {
 		var byteX = stickPos2Byte(x),
 			byteY = stickPos2Byte(y);
 		var byteArr = [STICK_CTRL_ID, byteX, byteY];
-		console.log(byteArr);
 
 		client.write(new Buffer(byteArr));
 	}
@@ -56,12 +55,8 @@ function stickPos2Byte(pos) {
 	return Math.floor(ANALOG_RANGE_MAX * (pos + 0.5));
 }
 
+function log(msg) {
+	process.stdout.write('' + msg + '\n')
+}
+
 module.exports.Client = Client;
-
-
-/*
-final short shortVal = (short) Math.floor(CONST.ANALOG_RANGE_MAX * (val + 0.5f));
-		System.out.println("shortval: " + shortVal);
-		return (byte) shortVal;
-
- */
