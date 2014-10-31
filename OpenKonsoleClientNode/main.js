@@ -10,6 +10,7 @@ var stick = require('./stick.js');
 
 var CURSOR_CODES = constants.chainCodesByCursorKeyCode;
 var STICK_POS_BY_CC = constants.stickPosByChainCodes;
+var BTN_IDS_BY_CODE = constants.buttonIDsByCode;
 var BTN_CODES_BY_KEY_NAME = constants.buttonCodesByKeyName;
 var POS_CENTER = constants.posCenter;
 
@@ -34,8 +35,8 @@ for(var i=0; i<Object.keys(STICK_POS_BY_CC).length; i++) {
 }
 
 var btnStates = {};
-for(var i=0; i<Object.keys(constants.buttonIDsByCode).length; i++) {
-	btnStates[i] = false;
+for(var i=0; i<Object.keys(BTN_IDS_BY_CODE).length; i++) {
+	btnStates[Object.keys(BTN_IDS_BY_CODE)[i]] = false;
 }
 
 var playerId = null;
@@ -95,8 +96,9 @@ function onStickEvent(key) {
 }
 
 function onButtonEvent(key) {
-	btnStates['A'] = !btnStates['A'];
-	client.sendButton('A', btnStates['A']);
+	var btnCode = BTN_CODES_BY_KEY_NAME[key.name];
+	btnStates[btnCode] = !btnStates[btnCode];
+	client.sendButton(btnCode, btnStates[btnCode]);
 	updateUi();
 }
 
@@ -117,4 +119,5 @@ function updateUi() {
 	ui.printStickState(stickState, currStickCC);
 	ui.printLineBreak();
 	ui.printStickPos(currStickCC);
+	ui.printButtons(btnStates);
 }

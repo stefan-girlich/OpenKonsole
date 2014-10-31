@@ -40,8 +40,8 @@ function Client(cb) {
 		client.write(new Buffer(byteArr));
 	}
 
-	this.sendButton = function(btn, down) {
-		var byteArr = [BTN_CTRL_IDS[btn], down ? 0 : 1];
+	this.sendButton = function(btnCode, down) {
+		var byteArr = [BTN_CTRL_IDS[btnCode], down ? 0 : 1];
 		client.write(new Buffer(byteArr));
 	}
 }

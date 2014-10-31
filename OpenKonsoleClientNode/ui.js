@@ -51,6 +51,19 @@ function clear() {
 	process.stdout.write('\u001B[2J\u001B[0;0f');
 }
 
+function printButtons(btnStates) {
+	console.log(btnStates)
+	for(var i=0; i<btnStates.length; i++) {
+		printButton(i, btnStates[i]);
+	}
+	printLineBreak();
+}
+
+function printButton(btnLabel, isPressed) {
+	print('button ' + btnLabel + '  ' + (isPressed ? printActive : printEmpty)())
+	printLineBreak();
+}
+
 function print(txt) {	process.stdout.write(txt);	}
 function printEmpty() {	print('[ ]');	}
 function printActive() {	print('[X]');	}
@@ -63,6 +76,7 @@ function printEmptyCenter() {	print('[+]');	}
 module.exports.clear = clear;
 module.exports.printStickState = printStickState;
 module.exports.printStickPos = printStickPos;
+module.exports.printButtons = printButtons;
 module.exports.print = print;
 module.exports.printLineBreak= printLineBreak;
 
