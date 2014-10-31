@@ -22,7 +22,7 @@ for(var i=0; i<Object.keys(STICK_POS_BY_CC).length; i++) {
 	stickState[i] = {pressed: false, active: false}
 }
 
-var btnStates = {};
+var btnStates = {}; // by code
 for(var i=0; i<Object.keys(BTN_IDS_BY_CODE).length; i++) {
 	btnStates[Object.keys(BTN_IDS_BY_CODE)[i]] = false;
 }
@@ -105,7 +105,8 @@ function onIllegalInput(key) {
 function updateUi() {
 	ui.clear();
 	ui.printStickState(stickState, currStickCC);
-	ui.printLineBreak();
 	ui.printStickPos(currStickCC);
+	ui.printLineBreak();
+	ui.printLineBreak();
 	ui.printButtons(btnStates);
 }

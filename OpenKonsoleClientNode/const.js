@@ -1,6 +1,7 @@
-// ====== OpenKonsole protocol ======
 
-// todo freeze constants
+// TODO freeze constants
+
+// ====== OpenKonsole protocol ======
 
 var buttonIDsByCode = {
 	'START': 0,

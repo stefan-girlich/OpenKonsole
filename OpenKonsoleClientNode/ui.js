@@ -52,15 +52,22 @@ function clear() {
 }
 
 function printButtons(btnStates) {
-	console.log(btnStates)
-	for(var i=0; i<btnStates.length; i++) {
-		printButton(i, btnStates[i]);
+	var btnCodes = Object.keys(btnStates);
+	for(var i=0; i<btnCodes.length; i++) {
+		var currBtnCode = btnCodes[i]
+		printButton(currBtnCode, btnStates[currBtnCode]);
 	}
 	printLineBreak();
 }
 
 function printButton(btnLabel, isPressed) {
-	print('button ' + btnLabel + '  ' + (isPressed ? printActive : printEmpty)())
+	if(isPressed) {
+		printActive();
+	}else {
+		printEmpty();
+	}
+
+	print(btnLabel)
 	printLineBreak();
 }
 
