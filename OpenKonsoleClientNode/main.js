@@ -14,20 +14,8 @@ var BTN_IDS_BY_CODE = constants.buttonIDsByCode;
 var BTN_CODES_BY_KEY_NAME = constants.buttonCodesByKeyName;
 var POS_CENTER = constants.posCenter;
 
-var STICK_INPUT =  0;
-var BUTTON_INPUT = 1;
-var KILL_INPUT = 2;
-var ILLEGAL_INPUT = 3;
-
 
 // ===== input state =====
-
-var evtHandlers = {};
-evtHandlers[STICK_INPUT] = onStickEvent;
-evtHandlers[BUTTON_INPUT] = onButtonEvent;
-evtHandlers[KILL_INPUT] =  onKillEvent;
-evtHandlers[ILLEGAL_INPUT] =  onIllegalInput;
-
 var currStickCC = null;
 var stickState = {};
 for(var i=0; i<Object.keys(STICK_POS_BY_CC).length; i++) {
@@ -59,24 +47,24 @@ updateUi();
 // ===== functions =====
 
 function onKeyPress(char, key) {
-	var inputType = keyToInputType(key);
-	evtHandlers[inputType](key);
+	var handler = getHandler(key);
+	handler(key);
 }
 
-function keyToInputType(key) {
+function getHandler(key) {
 	switch(true) {
 
 		case key.ctrl && key.name == 'c':
-			return KILL_INPUT;
+			return onKillEvent;
 
 		case CURSOR_CODES[key.code] !== undefined:
-			return STICK_INPUT;
+			return onStickEvent;
 
 		case BTN_CODES_BY_KEY_NAME[key.name] !== undefined:
-			return BUTTON_INPUT;
+			return onButtonEvent;
 
 		default:
-			return ILLEGAL_INPUT;
+			return onIllegalInput;
 	}
 }
 
