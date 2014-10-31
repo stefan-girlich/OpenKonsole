@@ -1,5 +1,7 @@
 // ====== OpenKonsole protocol ======
 
+// todo freeze constants
+
 var buttonIDsByCode = {
 	'START': 0,
 	'A': 1,
@@ -18,6 +20,14 @@ var chainCodesByCursorKeyCode = {
 	'[B':4,
 	'[D':6
 };
+
+var buttonCodesByKeyName = {
+	's': 'A',
+	'a': 'B',
+	'w': 'C',
+	'q': 'D',
+	'x': 'START'
+}
 
 var stickPosByChainCodes = {
 	0: {x: 0,	y: -1,	pressed: false, active: false},
@@ -47,4 +57,5 @@ module.exports.stickPosByChainCodes = stickPosByChainCodes;
 module.exports.posCenter = posCenter;
 module.exports.chainCodesOrdered = chainCodesOrdered;
 module.exports.chainCodesByCursorKeyCode = chainCodesByCursorKeyCode;
+module.exports.buttonCodesByKeyName = buttonCodesByKeyName;
 module.exports.stickMaxLevel = stickMaxLevel;

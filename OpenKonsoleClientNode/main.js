@@ -1,3 +1,5 @@
+'use strict' // TODO for all files with module use-strict
+
 var keypress = require('keypress');
 var cl = require('./client.js');
 var constants = require('./const.js');
@@ -8,11 +10,24 @@ var stick = require('./stick.js');
 
 var CURSOR_CODES = constants.chainCodesByCursorKeyCode;
 var STICK_POS_BY_CC = constants.stickPosByChainCodes;
+var BTN_CODES_BY_KEY_NAME = constants.buttonCodesByKeyName;
 var POS_CENTER = constants.posCenter;
+
+var STICK_INPUT =  0;
+var BUTTON_INPUT = 1;
+var KILL_INPUT = 2;
+var ILLEGAL_INPUT = 3;
 
 
 // ===== input state =====
 
+var evtHandlers = {};
+evtHandlers[STICK_INPUT] = onStickEvent;
+evtHandlers[BUTTON_INPUT] = onButtonEvent;
+evtHandlers[KILL_INPUT] =  onKillEvent;
+evtHandlers[ILLEGAL_INPUT] =  onIllegalInput;
+
+var currStickCC = null;
 var stickState = {};
 for(var i=0; i<Object.keys(STICK_POS_BY_CC).length; i++) {
 	stickState[i] = {pressed: false, active: false}
@@ -23,64 +38,83 @@ for(var i=0; i<Object.keys(constants.buttonIDsByCode).length; i++) {
 	btnStates[i] = false;
 }
 
+var playerId = null;
+
+// ===== controller logic =====
+
 keypress(process.stdin);
 process.stdin.on('keypress', onKeyPress);
 process.stdin.setRawMode(true);
 process.stdin.resume();
 
-
-var playerId = null;
-
 var client = new cl.Client(function(srvMsg) {
 	playerId = srvMsg;
-	console.log('playerId assigned from server: ' + playerId)
 });
 
 client.connect();
 
+updateUi();
+
+// ===== functions =====
 
 function onKeyPress(char, key) {
-	if (key && key.ctrl && key.name == 'c') {
-		process.stdin.pause();
-		client.disconnect();
-		return;
+	var inputType = keyToInputType(key);
+	evtHandlers[inputType](key);
+}
+
+function keyToInputType(key) {
+	switch(true) {
+
+		case key.ctrl && key.name == 'c':
+			return KILL_INPUT;
+
+		case CURSOR_CODES[key.code] !== undefined:
+			return STICK_INPUT;
+
+		case BTN_CODES_BY_KEY_NAME[key.name] !== undefined:
+			return BUTTON_INPUT;
+
+		default:
+			return ILLEGAL_INPUT;
 	}
+}
 
-	if(!storeKeyPress(key)) {
-		// handle any non-cursor key press as button A
-		// TODO DEBUG ONLY
-		
-		btnStates['A'] = !btnStates['A'];
-		client.sendButton('A', btnStates['A']);
-		return;
-	}
+function onStickEvent(key) {
+	var cursorKey = CURSOR_CODES[key.code];
+	stickState[cursorKey].pressed = !stickState[cursorKey].pressed;
+	currStickCC = stick.updateStickState(stickState);
 
-	var stickCC = stick.updateStickState(stickState);
-	updateUi(stickCC);
-
-	var p = STICK_POS_BY_CC[stickCC];
-	if(stickCC == null) {
+	var p = STICK_POS_BY_CC[currStickCC];
+	if(currStickCC == null) {
 		p = POS_CENTER;
 	}
 
 	client.sendStick(p.x * constants.stickMaxLevel, p.y * constants.stickMaxLevel);
+
+	updateUi();
 }
 
-function storeKeyPress(key) {
-	var cursorKey = CURSOR_CODES[key.code];
-	if(cursorKey === undefined) {
-		console.log('no cursor: ' + key.code)
-		return false;
-	}
-
-	stickState[cursorKey].pressed = !stickState[cursorKey].pressed;
-	return true;
+function onButtonEvent(key) {
+	btnStates['A'] = !btnStates['A'];
+	client.sendButton('A', btnStates['A']);
+	updateUi();
 }
 
-
-function updateUi(stickCC) {
-	ui.clear();
-	ui.printStickState(stickState, stickCC);
+function onKillEvent(key) {
+	process.stdin.pause();
 	ui.printLineBreak();
-	ui.printStickPos(stickCC);
+	client.disconnect();
+}
+
+function onIllegalInput(key) {
+	ui.printLineBreak();
+	ui.print('Illegal input, doing nothing!')
+}
+
+
+function updateUi() {
+	ui.clear();
+	ui.printStickState(stickState, currStickCC);
+	ui.printLineBreak();
+	ui.printStickPos(currStickCC);
 }
