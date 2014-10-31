@@ -4,23 +4,24 @@ var constants = require('./const.js');
 var ui = require('./ui.js');
 var stick = require('./stick.js');
 
-var CURSOR_CODES = {
-	'[A':0, 
-	'[C':2,
-	'[B':4,
-	'[D':6
-};
+// ===== constants =====
 
-var stickPosByCC = constants.stickPosByChainCodes;
-var posCenter = constants.posCenter;
+var CURSOR_CODES = constants.chainCodesByCursorKeyCode;
+var STICK_POS_BY_CC = constants.stickPosByChainCodes;
+var POS_CENTER = constants.posCenter;
+
+
+// ===== input state =====
+
 var stickState = {};
-for(var i=0; i<Object.keys(stickPosByCC).length; i++) {
+for(var i=0; i<Object.keys(STICK_POS_BY_CC).length; i++) {
 	stickState[i] = {pressed: false, active: false}
 }
 
-var buttons = {
-	'A': false
-};
+var btnStates = {};
+for(var i=0; i<Object.keys(constants.buttonIDsByCode).length; i++) {
+	btnStates[i] = false;
+}
 
 keypress(process.stdin);
 process.stdin.on('keypress', onKeyPress);
@@ -35,34 +36,34 @@ var client = new cl.Client(function(srvMsg) {
 	console.log('playerId assigned from server: ' + playerId)
 });
 
-//client.connect();
+client.connect();
 
 
 function onKeyPress(char, key) {
 	if (key && key.ctrl && key.name == 'c') {
 		process.stdin.pause();
-		//client.disconnect();
+		client.disconnect();
 		return;
 	}
 
 	if(!storeKeyPress(key)) {
 		// handle any non-cursor key press as button A
 		// TODO DEBUG ONLY
-		buttons['A'] = !buttons['A'];
-		//client.sendButton('A', state);
+		
+		btnStates['A'] = !btnStates['A'];
+		client.sendButton('A', btnStates['A']);
 		return;
 	}
 
 	var stickCC = stick.updateStickState(stickState);
 	updateUi(stickCC);
 
-	var f = 0.5;
-	var p = stickPosByCC[stickCC];
+	var p = STICK_POS_BY_CC[stickCC];
 	if(stickCC == null) {
-		p = posCenter;
+		p = POS_CENTER;
 	}
 
-	//client.sendStick(p.x * f, p.y * f)
+	client.sendStick(p.x * constants.stickMaxLevel, p.y * constants.stickMaxLevel);
 }
 
 function storeKeyPress(key) {

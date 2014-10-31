@@ -1,18 +1,13 @@
 var net = require('net');
+var constants = require('./const.js');
 
 var HOST = '192.168.178.56';
 var PORT = 1337;
 
 var ANALOG_RANGE_MAX = 254; // 2^8 - 1 -1
 
-var BTN_CTRL_IDS = {
-	'START': 0,
-	'A': 1,
-	'B': 2,
-	'C': 3,
-	'D': 4
-}
-var STICK_CTRL_ID = 5;
+var BTN_CTRL_IDS = constants.buttonIDsByCode;
+var STICK_CTRL_ID = constants.stickID;
 
 
 function Client(cb) {
