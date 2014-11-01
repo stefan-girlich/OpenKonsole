@@ -5,8 +5,9 @@
     "main": "./html/index.html",
     "private":true,
     "window": {
-        "min_width": 1280,
-        "min_height": 768
+        "width": 1024,
+        "height": 768,
+        "position": "center"
     },
     "webkit": {
         "plugin": true
