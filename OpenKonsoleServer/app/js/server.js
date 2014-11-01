@@ -63,14 +63,12 @@ var Player = function(playerID) {
     var btnStates = [false, false]; // TODO cooler way to store?
 
 
-    // TODO store as constants!
-
     var callbacks = {
-        'connected': null,
-        'disconnected': null,
-        'stickPositionChanged': null,
-        'stickPositionChangedRaw': null,
-        'buttonChanged': null
+        'connected': [],
+        'disconnected': [],
+        'stickPositionChanged': [],
+        'stickPositionChangedRaw': [],
+        'buttonChanged': []
     };
 
     this.getID = function() { return id; };
@@ -87,8 +85,6 @@ var Player = function(playerID) {
 
     this.disconnect = function() {
         socket = null;
-        // TODO reset input? to private method?
-
         dispatchEvent('disconnected');
     }
 
@@ -126,15 +122,21 @@ var Player = function(playerID) {
 
 
     this.on = function(eventType, callback) {
-        callbacks[eventType] = callback;
+        callbacks[eventType].push(callback);
     }
 
     function dispatchButtonEvent(type, btnIx, downState) {
-        if(callbacks[type])		callbacks[type](self, btnIx, downState);
+
+        callbacks[type].forEach(function(cb) {
+            //cb(self, {'index': btnIx, 'down': downState}); // TODO send OK code, not index!
+            cb(self, btnIx, downState); // TODO send OK code, not index!
+        });
     }
 
     function dispatchEvent(type, data) {
-        if(callbacks[type])		callbacks[type](self, data);
+        callbacks[type].forEach(function(cb) {
+            cb(self, data);
+        });
     }
 };
 

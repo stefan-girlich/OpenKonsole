@@ -2,7 +2,10 @@ var fs = require('fs');
 var dns = require('dns');
 var os = require('os');
 var dgram = require('dgram');
+
+// TODO replace '../js/' with './'
 var srv = require('../js/server.js');
+var ui = require('../js/ui.js');
 var jade = require('jade');
 
 
@@ -14,32 +17,40 @@ var JADE_FILENAME = 'index.jade';
 
 var config = readConfig();
 var playerSrv = new srv.PlayerServer();
+var players = playerSrv.getPlayers();      // TODO seems to be visible in node-webkit; better hide and provide API method
 
 if(config.host) {
-    startServer(config.host, config.tcpPort, config.udpPort);
+    init(config.host, config.tcpPort, config.udpPort);
 }else {
     // family returns an integer (4 = IPv4, 6 = IPv6, null = both)
     // TODO Ensure IPv6 compatibility
     // TODO TEST
     dns.lookup(os.hostname(), function (error, address, family) {
-        startServer(address, config.tcpPort, config.udpPort);
+        init(address, config.tcpPort, config.udpPort);
     });
 }
 
-// TODO seems to be visible in node-webkit; better hide and provide API method
-var players = playerSrv.getPlayers();
-
-
-function startServer(host, tcpPort, udpPort) {
+function init(host, tcpPort, udpPort) {
 
     var clientResponder = new srv.ClientResponder(host, udpPort, tcpPort);
     playerSrv.listen(tcpPort, host);
+
+    var menu = new ui.UiMenu();
+    var playerIds = Object.keys(players);
+
+    playerIds.forEach(function(playerId) {
+        // TODO redudnant with definition in server.js
+        players[playerId].on('connected', menu.onConnected);
+        players[playerId].on('disconnected', menu.onDisconnected);
+        players[playerId].on('stickPositionChangedRaw', menu.stickPositionChangedRaw);
+        players[playerId].on('stickPositionChanged', menu.stickPositionChanged);
+        players[playerId].on('buttonChanged', menu.buttonChanged);
+    });
 
     // TODO DEBUG ONLY, game should be launched from UI
     var conf = readConfig();
     loadGame(conf.gamesDirectory, GAME_NAME)
 };
-
 
 
 function loadGame(gamesDir, gameName) {
