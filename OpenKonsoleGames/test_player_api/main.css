@@ -14,6 +14,16 @@ body {
     margin-right: 20px;
 }
 
+#pause_state {
+    background: white;
+    float: left;
+    padding: 10px;
+}
+
+#pause_state.active {
+    background: red;
+}
+
 .player_info {
     float: left;
     position: relative;

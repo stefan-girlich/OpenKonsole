@@ -232,6 +232,11 @@ var PlayerRegistry = function() {
 
 function PlayerServer() {
 
+    var callbacks = {
+        'pause': [],
+        'unpause': []
+    };
+
     var playerRegistry = new PlayerRegistry();
 
     var srv = net.createServer(function(socket) {
@@ -274,12 +279,24 @@ function PlayerServer() {
         srv.listen(port, host);
     }
 
+    // TODO shouldn't be accessible from game
     this.setPaused = function(paused) {
         playerRegistry.setPaused(paused);
+        dispatchEvent(paused ? 'pause' : 'unpause');
     }
+
+    this.on = function(eventType, callback) {
+        callbacks[eventType].push(callback);
+    };
 
     this.getPlayers = function() {
         return playerRegistry.getPlayers();
+    }
+
+    function dispatchEvent(evtType, evtData) {
+        callbacks[evtType].forEach(function(cb) {
+            cb(evtData);
+        });
     }
 }
 

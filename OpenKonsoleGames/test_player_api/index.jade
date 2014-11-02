@@ -2,6 +2,9 @@ link(rel='stylesheet', href='main.css', type='text/css')
 script(src='main.js')
 
 
+div#pause_state
+    | PAUSED_STATE
+
 div(template).player_info
     div.full.player_id
         | Player ID
@@ -29,5 +32,3 @@ div(template).player_info
         | Button START
 
 canvas#stage(width='512', height='512')
-
-    

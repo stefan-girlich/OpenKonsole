@@ -43,6 +43,14 @@ for(var i=0; i<playerKeys.length; i++) {
     players[i].on('buttonChanged', onButtonChanged);
 }
 
+playerSrv.on('pause', function() {
+    $('#pause_state').addClass('active');
+})
+
+playerSrv.on('unpause', function() {
+    $('#pause_state').removeClass('active');
+})
+
 
 function onConnected(playerInstance) {
     domPlayers[playerInstance.getID()].setConnected(true);
