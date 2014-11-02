@@ -3,9 +3,6 @@ var dgram = require('dgram');
 var udpClient = dgram.createSocket("udp4");
 var ipRange = getIpRange(1,254);
 
-udpClient.on('error' ,function(err) {
-    console.log('dammit!!!')
-});
 
 function getIpRange(min, max){
     var result = [];
@@ -113,7 +110,7 @@ var Player = function(playerID) {
 
     this.setButtonState = function(btnIx, isDown)  {
         btnStates[btnIx] = isDown;
-        dispatchButtonEvent('buttonChanged', btnIx, isDown);
+        dispatchEvent('buttonChanged', {'index': btnIx, 'down': isDown});
     }
 
     this.getButtonState = function(btnIx) { return btnStates[btnIx]; }
@@ -123,14 +120,6 @@ var Player = function(playerID) {
 
     this.on = function(eventType, callback) {
         callbacks[eventType].push(callback);
-    }
-
-    function dispatchButtonEvent(type, btnIx, downState) {
-
-        callbacks[type].forEach(function(cb) {
-            //cb(self, {'index': btnIx, 'down': downState}); // TODO send OK code, not index!
-            cb(self, btnIx, downState); // TODO send OK code, not index!
-        });
     }
 
     function dispatchEvent(type, data) {

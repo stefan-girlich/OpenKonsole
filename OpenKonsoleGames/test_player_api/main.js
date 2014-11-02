@@ -72,8 +72,8 @@ function onStickPositionChanged(playerInstance, stickPos) {
     domPlayers[playerInstance.getID()].setPos(stickPos.x, stickPos.y);
 }
 
-function onButtonChanged(playerInstance, buttonID, isDown) {
-    domPlayers[playerInstance.getID()].setButtonDown(buttonID, isDown);
+function onButtonChanged(playerInstance, evt) {
+    domPlayers[playerInstance.getID()].setButtonDown(evt.index, evt.down);
 }
 
 

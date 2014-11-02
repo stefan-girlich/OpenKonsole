@@ -131,8 +131,8 @@ var countdownRemaining = CONSTR.countDownTime * 1000;
 players[0].on('buttonChanged', onUserButtonPress);
 players[1].on('buttonChanged', onUserButtonPress);
 
-function onUserButtonPress(player, btnId, down) {
-	if(!down) {
+function onUserButtonPress(player, evt) {
+	if(!evt.down) {
 		switch(gameState) {
 			case STATE.home:
 				switchGameState(STATE.countdown);

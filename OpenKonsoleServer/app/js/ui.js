@@ -28,11 +28,11 @@ module.exports.UiMenu = function() {
 		console.log(stickPos)
 	}
 
-	this.buttonChanged = function(player, btnId, down) {
+	this.buttonChanged = function(player, evt) {
 		console.log('buttonChanged ')
 		console.log(player)
-		console.log(btnId)
-		console.log(down)
+		console.log(evt.index)
+		console.log(evt.down)
 
 		$menuFrame.toggleClass('hidden');
 	}
