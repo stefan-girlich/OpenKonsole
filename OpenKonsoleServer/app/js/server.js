@@ -78,6 +78,11 @@ var Player = function(playerID) {
         'buttonChanged': []
     };
 
+    var callbacksInternal = {};
+    Object.keys(callbacks).forEach(function(evtType) {
+        callbacksInternal[evtType] = [];
+    });
+
     this.getID = function() { return id; };
 
     this.connect = function(playerSocket) {
@@ -99,15 +104,20 @@ var Player = function(playerID) {
         return socket != null;
     }
 
+    this.paused = false;
+
     /** x and y are RAW input values, depicting the position
      in the entire available movement area without any deadzones */
     this.setStickPos = function(x, y) {
-        stickPosRaw.x = x;
-        stickPosRaw.y = y;
 
-        // TODO wooooaaah... is this the simplest way?
-        stickPosNorm.x = (Math.sign(x) * (Math.min(Math.abs(x), util.normalSquareMaxVal) / util.normalSquareMaxVal)) / 2;
-        stickPosNorm.y = (Math.sign(y) * (Math.min(Math.abs(y), util.normalSquareMaxVal) / util.normalSquareMaxVal)) / 2;
+        if(!self.paused) {
+            stickPosRaw.x = x;
+            stickPosRaw.y = y;
+
+            // TODO wooooaaah... is this the simplest way?
+            stickPosNorm.x = (Math.sign(x) * (Math.min(Math.abs(x), util.normalSquareMaxVal) / util.normalSquareMaxVal)) / 2;
+            stickPosNorm.y = (Math.sign(y) * (Math.min(Math.abs(y), util.normalSquareMaxVal) / util.normalSquareMaxVal)) / 2;
+        }
 
         dispatchEvent('stickPositionChanged', stickPosNorm);
         dispatchEvent('stickPositionChangedRaw', stickPosRaw);
@@ -119,7 +129,7 @@ var Player = function(playerID) {
     this.getStickPosRaw = function() { return stickPosRaw; };
 
     this.setButtonState = function(btnCode, isDown)  {
-        btnStates[btnCode] = isDown;
+        if(!this.paused) btnStates[btnCode] = isDown;
         dispatchEvent('buttonChanged', {'code': btnCode, 'down': isDown});
     }
 
@@ -128,14 +138,25 @@ var Player = function(playerID) {
     this.getSocket = function() { return socket; }
 
 
-    this.on = function(eventType, callback) {
-        callbacks[eventType].push(callback);
+    // TODO "internal" flag should not be accessible through the player API
+    this.on = function(eventType, callback, internal) {
+        if(internal) {
+            callbacksInternal[eventType].push(callback);
+        }else {
+            callbacks[eventType].push(callback);
+        }
     }
 
     function dispatchEvent(type, data) {
-        callbacks[type].forEach(function(cb) {
+        callbacksInternal[type].forEach(function(cb) {
             cb(self, data);
         });
+
+        if(!self.paused) {
+            callbacks[type].forEach(function(cb) {
+                cb(self, data);
+            });
+        }
     }
 
     function resetButtonStates() {
@@ -170,6 +191,17 @@ var PlayerRegistry = function() {
         }
 
         return null;
+    }
+
+    this.setPaused = function(paused) {
+
+        console.log('PR.setPaused ' + paused)
+
+        var keys = Object.keys(players);
+        keys.forEach(function(k) {
+            console.log('set ' + k + ' to pause: ' + paused)
+            players[k].paused = paused;
+        })
     }
 
     this.unregister = function(playerSocket) {
@@ -218,9 +250,6 @@ function PlayerServer() {
         socket.on('close', onClose);
 
         function onDataReceived(data) {
-            //console.log('client sent message: ' + socket.remoteAddress + ':' + socket.remotePort);
-            console.log('======= PLAYER ' + playerID + '=======')
-
             var dataArr = new Uint8Array(util.toArrayBuffer(data));
             if(dataArr[0] < 5) { // action type: button
                 var btnId = dataArr[0];
@@ -231,10 +260,8 @@ function PlayerServer() {
         }
 
         function onClose(data) {
-            //console.log('client disconnected: ' + socket.remoteAddress + ':' + socket.remotePort);
-
             if(!playerRegistry.unregister(socket)) {
-                console.log('connection closed for socket, but was not registered as player!')
+                console.log('connection closed for socket, but was not registered as player!');
             }
         }
     });
@@ -247,8 +274,8 @@ function PlayerServer() {
         srv.listen(port, host);
     }
 
-    this.stop = function() {
-        console.log('TODO IMPL stop function')
+    this.setPaused = function(paused) {
+        playerRegistry.setPaused(paused);
     }
 
     this.getPlayers = function() {

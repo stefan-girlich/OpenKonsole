@@ -12,11 +12,13 @@ var jade = require('jade');
 var USER_DIR = '.openkonsole/';
 var CONFIG_FILE = 'config.json';
 var GAME_NAME = 'pong'; // TODO DYN
+GAME_NAME = 'test_player_api'
 var JADE_FILENAME = 'index.jade';
 
 
 var config = readConfig();
 var playerSrv = new srv.PlayerServer();
+var paused = false;
 var players = playerSrv.getPlayers();      // TODO seems to be visible in node-webkit; better hide and provide API method
 
 if(config.host) {
@@ -50,12 +52,23 @@ function initUI() {
     var playerIds = Object.keys(players);
     playerIds.forEach(function(playerId) {
         // TODO redundant with definition in server.js
-        players[playerId].on('connected', menu.onConnected);
-        players[playerId].on('disconnected', menu.onDisconnected);
-        players[playerId].on('stickPositionChangedRaw', menu.stickPositionChangedRaw);
-        players[playerId].on('stickPositionChanged', menu.stickPositionChanged);
-        players[playerId].on('buttonChanged', menu.buttonChanged);
+        players[playerId].on('connected', menu.onConnected, true);
+        players[playerId].on('disconnected', menu.onDisconnected, true);
+        players[playerId].on('stickPositionChangedRaw', menu.stickPositionChangedRaw, true);
+        players[playerId].on('stickPositionChanged', menu.stickPositionChanged, true);
+        players[playerId].on('buttonChanged', onButtonChanged, true);
     });
+
+    function onButtonChanged(player, evt) {
+
+        if(evt.code === 'START' && evt.down === true) {  // TODO using START for debug only; should be master button
+            paused = !paused;
+            playerSrv.setPaused(paused);
+            menu.setVisible(paused);
+            menu.buttonChanged(player, evt);
+            return;
+        }
+    }
 }
 
 function loadGame(gamesDir, gameName) {

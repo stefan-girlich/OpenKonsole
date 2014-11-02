@@ -6,6 +6,18 @@ module.exports.UiMenu = function() {
 		 $menuFrame = $el;
 	}
 
+	this.setVisible = function(visible) {
+		if(!$menuFrame) { 
+			return;
+		}
+
+		if(visible) {
+			$menuFrame.removeClass('hidden');
+		}else {
+			$menuFrame.addClass('hidden');
+		}
+	}
+
 	this.onConnected = function(player) {
 		console.log('onConnected')
 		console.log(player)
@@ -29,11 +41,10 @@ module.exports.UiMenu = function() {
 	}
 
 	this.buttonChanged = function(player, evt) {
+		return;
 		console.log('buttonChanged ')
 		console.log(player)
 		console.log(evt.code)
 		console.log(evt.down)
-
-		if($menuFrame) $menuFrame.toggleClass('hidden');
 	}
 }
