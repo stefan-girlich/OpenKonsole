@@ -1,7 +1,9 @@
 module.exports.UiMenu = function() {
 
-	this.setMenuFrame = function($menuFrame) {
-		console.log($menuFrame);
+	var $menuFrame;
+
+	this.setMenuFrame = function($el) {
+		 $menuFrame = $el;
 	}
 
 	this.onConnected = function(player) {
@@ -31,5 +33,7 @@ module.exports.UiMenu = function() {
 		console.log(player)
 		console.log(btnId)
 		console.log(down)
+
+		$menuFrame.toggleClass('hidden');
 	}
 }

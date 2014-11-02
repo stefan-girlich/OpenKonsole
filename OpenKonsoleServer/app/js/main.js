@@ -36,10 +36,11 @@ function init(host, tcpPort, udpPort) {
     playerSrv.listen(tcpPort, host);
 
     var menu = new ui.UiMenu();
-    var playerIds = Object.keys(players);
+    menu.setMenuFrame($('#menu_frame'));
 
+    var playerIds = Object.keys(players);
     playerIds.forEach(function(playerId) {
-        // TODO redudnant with definition in server.js
+        // TODO redundant with definition in server.js
         players[playerId].on('connected', menu.onConnected);
         players[playerId].on('disconnected', menu.onDisconnected);
         players[playerId].on('stickPositionChangedRaw', menu.stickPositionChangedRaw);

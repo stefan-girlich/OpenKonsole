@@ -1,9 +1,8 @@
 
 #stage_wrap {
-	position: relative;
-	float: left;
-	width: 800px;
-	height: 600px;
+	position: absolute;
+	width: 100%;
+	height: 100%;
 }
 
 #stage_wrap canvas {

@@ -44,7 +44,6 @@ for(var i=0; i<playerKeys.length; i++) {
 }
 
 
-
 function onConnected(playerInstance) {
     domPlayers[playerInstance.getID()].setConnected(true);
 }
