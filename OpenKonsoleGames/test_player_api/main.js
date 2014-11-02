@@ -73,7 +73,7 @@ function onStickPositionChanged(playerInstance, stickPos) {
 }
 
 function onButtonChanged(playerInstance, evt) {
-    domPlayers[playerInstance.getID()].setButtonDown(evt.index, evt.down);
+    domPlayers[playerInstance.getID()].setButtonDown(evt.code, evt.down);
 }
 
 
@@ -156,8 +156,8 @@ function DOMPlayerInfo() {
         el.querySelector('.pos_y_raw').innerHTML = Math.round(y * 10000) / 10000;
     }
 
-    this.setButtonDown = function(btnId, down) {
-        var el_btn = el.querySelector('.btn.btn' + btnId);
+    this.setButtonDown = function(btnCode, down) {
+        var el_btn = el.querySelector('.btn.btn_' + btnCode);
         var classes = el_btn.className.split(' ');
         if(down) {
             el_btn.className += ' down';

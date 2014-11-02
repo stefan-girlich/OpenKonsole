@@ -15,6 +15,15 @@ function getIpRange(min, max){
 
 var ANALOG_RANGE_MAX = 254; // 2^8 - 1 - 1 (to enable integer center positions)
 
+// TODO constants
+var BUTTON_CODES_BY_ID = {
+    0: 'START',
+    1: 'A',
+    2: 'B',
+    3: 'C',
+    4: 'D'
+}
+
 // shims
 Math.sign = Math.sign || function(value) {
     if(value === 0) return 0;
@@ -57,7 +66,8 @@ var Player = function(playerID) {
 
     var stickPosRaw = {x: 0, y: 0};
     var stickPosNorm = {x: 0, y: 0};
-    var btnStates = [false, false]; // TODO cooler way to store?
+    var btnStates = {};
+    resetButtonStates();
 
 
     var callbacks = {
@@ -75,7 +85,7 @@ var Player = function(playerID) {
         socket = playerSocket;
 
         stickPosRaw.x = stickPosRaw.y = stickPosNorm.x = stickPosNorm.y = 0;
-        btnStates = [false, false];
+        resetButtonStates();
 
         dispatchEvent('connected');
     }
@@ -108,12 +118,12 @@ var Player = function(playerID) {
     this.getStickPos = function() { return stickPosNorm; };
     this.getStickPosRaw = function() { return stickPosRaw; };
 
-    this.setButtonState = function(btnIx, isDown)  {
-        btnStates[btnIx] = isDown;
-        dispatchEvent('buttonChanged', {'index': btnIx, 'down': isDown});
+    this.setButtonState = function(btnCode, isDown)  {
+        btnStates[btnCode] = isDown;
+        dispatchEvent('buttonChanged', {'code': btnCode, 'down': isDown});
     }
 
-    this.getButtonState = function(btnIx) { return btnStates[btnIx]; }
+    this.getButtonState = function(btnCode) { return btnStates[btnCode]; }
 
     this.getSocket = function() { return socket; }
 
@@ -125,6 +135,12 @@ var Player = function(playerID) {
     function dispatchEvent(type, data) {
         callbacks[type].forEach(function(cb) {
             cb(self, data);
+        });
+    }
+
+    function resetButtonStates() {
+        Object.keys(BUTTON_CODES_BY_ID).forEach(function(btnId) {
+            btnStates[btnId] = false;
         });
     }
 };
@@ -207,8 +223,8 @@ function PlayerServer() {
 
             var dataArr = new Uint8Array(util.toArrayBuffer(data));
             if(dataArr[0] < 5) { // action type: button
-                player.setButtonState((dataArr[0] - 1), dataArr[1] === 0);
-                console.log('---> ' + (dataArr[0] - 1) + ', ' + (dataArr[1] === 0))
+                var btnId = dataArr[0];
+                player.setButtonState(BUTTON_CODES_BY_ID[btnId], dataArr[1] === 0);
             }else {	// action type: analog input
                 player.setStickPos((dataArr[1] / ANALOG_RANGE_MAX) - 0.5, (dataArr[2] / ANALOG_RANGE_MAX) - 0.5);
             }

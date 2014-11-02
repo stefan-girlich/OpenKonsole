@@ -35,6 +35,15 @@ function init(host, tcpPort, udpPort) {
     var clientResponder = new srv.ClientResponder(host, udpPort, tcpPort);
     playerSrv.listen(tcpPort, host);
 
+    initUI();
+
+    // TODO DEBUG ONLY, game should be launched from UI
+    var conf = readConfig();
+    loadGame(conf.gamesDirectory, GAME_NAME)
+};
+
+
+function initUI() {
     var menu = new ui.UiMenu();
     menu.setMenuFrame($('#menu_frame'));
 
@@ -47,12 +56,7 @@ function init(host, tcpPort, udpPort) {
         players[playerId].on('stickPositionChanged', menu.stickPositionChanged);
         players[playerId].on('buttonChanged', menu.buttonChanged);
     });
-
-    // TODO DEBUG ONLY, game should be launched from UI
-    var conf = readConfig();
-    loadGame(conf.gamesDirectory, GAME_NAME)
-};
-
+}
 
 function loadGame(gamesDir, gameName) {
     gamesDir = fixTrailingDirSeparator(gamesDir);

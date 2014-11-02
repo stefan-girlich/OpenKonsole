@@ -31,9 +31,9 @@ module.exports.UiMenu = function() {
 	this.buttonChanged = function(player, evt) {
 		console.log('buttonChanged ')
 		console.log(player)
-		console.log(evt.index)
+		console.log(evt.code)
 		console.log(evt.down)
 
-		$menuFrame.toggleClass('hidden');
+		if($menuFrame) $menuFrame.toggleClass('hidden');
 	}
 }
