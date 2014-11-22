@@ -28,7 +28,7 @@ import android.widget.TextView;
 
 @EActivity(R.layout.activity_main)
 public class MainActivity extends Activity {
-	
+
 	private static final String FOUND_CONSOLE_PREFIX = "openKonsole @ ";
 	
 //	private UDPBroadcastReceiver udpReceiver = new UDPBroadcastReceiver(CONST.UDP_PORT);
@@ -44,10 +44,8 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
 		WifiManager wm = (WifiManager) getSystemService(WIFI_SERVICE);
 		clientIpAddress = wm.getConnectionInfo().getIpAddress();
-		
 		listenForConsole();
 	}
 	
